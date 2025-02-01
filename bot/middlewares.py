@@ -3,11 +3,31 @@ from utils.log import logger
 from typing import Any, Dict, Union, Callable, Awaitable
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
+from aiogram.filters import Filter
 
 from bot.database.queries.user import add_user, get_user_by_id, update_user
 
 from rich import print
 
+from aiogram import Bot
+
+
+class CheckState(Filter):
+  
+  async def __call__(
+    self, 
+    message: Message, 
+    bot: Bot, 
+    state: FSMContext
+    ) -> bool:
+
+    user = await get_user_by_id(message.from_user.id)
+    if (user["group_name"] is None) and ((await state.get_state()) != "SetGroup:group_name") and (message.text != "/start"):
+      print("Idet nahui na group_name blyad :(")
+      return False
+    
+    return True
 
 class MsgLoggerMiddleware(BaseException):
 
@@ -15,7 +35,7 @@ class MsgLoggerMiddleware(BaseException):
         self,
         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
         event: Message | CallbackQuery,
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ) -> Any:
         
         user = await get_user_by_id(event.from_user.id)

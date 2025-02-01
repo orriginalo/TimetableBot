@@ -7,7 +7,7 @@ from bot.handlers import router
 from bot.database.core import create_tables
 from bot.scheduler import start_scheduler
 from utils.selenium_driver import driver
-from bot.middlewares import MsgLoggerMiddleware
+from bot.middlewares import CheckState, MsgLoggerMiddleware
 
 from aiogram import Bot, Dispatcher
 
@@ -19,6 +19,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 dp.message.middleware(MsgLoggerMiddleware())
+dp.message.filter(CheckState())
 
 login = os.getenv('LOGIN')
 password = os.getenv('PASSWORD')

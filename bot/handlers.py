@@ -34,11 +34,6 @@ async def _(msg: Message, state: FSMContext):
   else:
     await msg.answer("Группа не найдена. Попробуй еще раз.")
     
-@router.message()
-async def _(msg: Message, state: FSMContext, user):
-  if user["group_name"] is None:
-    return
-  
 @router.message(F.text == "⏭️ След. неделя")
 async def _(msg: Message):
   pass
@@ -57,6 +52,7 @@ async def _(msg: Message):
 
 @router.message(F.text == "📃 Изменения")
 async def _(msg: Message):
+  print("Handling changes")
   await instantly_send_changes(msg.bot, await get_user_by_id(msg.from_user.id))
 
 @router.message(F.text == "Сменить группу 🔄️")
@@ -66,6 +62,35 @@ async def _(msg: Message):
 @router.message(F.text == "❔Расписание другой группы❔")
 async def _(msg: Message):
   pass
+
+@router.message(Command("settings"))
+async def show_settings(message: Message, state: FSMContext):
+  await state.clear()
+  user = await get_user_by_id(message.from_user.id)
+  await message.answer("🔧 Настройки рассылки:", reply_markup=await kb.get_settings_keyboard(user))
+    
+# User settings: {"send_timetable_new_week": false, "send_timetable_updated": false, "send_changes_updated": false}
+
+@router.callback_query(F.data.contains("setting"))
+async def settings_handler(call: CallbackQuery):
+  setting_name = call.data.replace("_setting", "").replace("disable_", "").replace("enable_", "")
+  setting_condition = False if call.data.split("_")[0] == "disable" else True
+  print(setting_name, setting_condition)
+  user = await get_user_by_id(call.from_user.id)
+  user_settings = user["settings"]
+  user_settings_copy = user_settings.copy()
+  match (setting_name):
+    case "send_timetable_new_week":
+      user_settings_copy["send_timetable_new_week"] = not setting_condition
+    case "send_timetable_updated":
+      user_settings_copy["send_timetable_updated"] = not setting_condition
+    case "send_changes_updated":
+      user_settings_copy["send_changes_updated"] = not setting_condition
+    case _:
+      pass
+  user = await update_user(call.from_user.id, settings=user_settings_copy)
+  updated_kb = await kb.get_settings_keyboard(user)
+  await call.message.edit_reply_markup(reply_markup=updated_kb)
 
 @router.callback_query(F.data.contains("_changes"))
 async def _(callback: CallbackQuery):

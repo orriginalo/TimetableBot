@@ -1,6 +1,7 @@
+import asyncio
 from sqlalchemy import Boolean, cast, func
 from bot.database.models import User
-from bot.database.queries.group import get_group_by_id
+from bot.database.queries.group import get_group_by_name
 from bot.database.queries.user import get_user_by_id, get_users
 from bot.database.queries.settings import get_setting, set_setting
 from utils.timetable.downloader import download_timetable
@@ -34,8 +35,8 @@ async def check_changes_job(bot: Bot):
     
 def pdf_to_png(pdf_path: str, output_folder: str, date: str):
     # Конвертируем PDF в список изображений (по одной картинке на страницу)
-    images = convert_from_path(pdf_path, dpi=300)
-    # images = convert_from_path(pdf_path, dpi=300, poppler_path="C:\\poppler\\poppler-24.08.0\\Library\\bin")
+    # images = convert_from_path(pdf_path, dpi=300)
+    images = convert_from_path(pdf_path, dpi=300, poppler_path="C:\\poppler\\poppler-24.08.0\\Library\\bin")
 
     # Сохраняем каждую страницу как PNG
     for i, img in enumerate(images):
@@ -102,7 +103,7 @@ async def send_changes_to_users(bot: Bot, date: str):
   
 
   for user in users_with_setting:
-    group = await get_group_by_id(user["group_id"])
+    group = await get_group_by_name(user["group_name"])
     text = (
       f"🔔 Появились изменения на <b>{date}</b>.\n"
       f"<b>Группа {group['name']} есть в списке изменений!</b>\n"
@@ -122,45 +123,51 @@ async def send_changes_to_users(bot: Bot, date: str):
 
       await bot.send_media_group(user["tg_id"], media=media)
 
+
+async def changes_to_tomorrow_exists():
+  tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d.%m.%y")
+  path_to_file = f"./data/changes/changes_{tomorrow_date}.pdf"
+  return os.path.exists(path_to_file)
+  
+
 async def instantly_send_changes(bot: Bot, user: dict):
-  pdf_url = get_pdf_url_from_page()
-  download_pdf_from_url(pdf_url)
-  changes_date = get_changes_date(pdf_url)
+  message = await bot.send_message(user["tg_id"], "⏳ Получаю изменения...", parse_mode="html")
+  files = os.listdir("./data/changes/")
+  files.sort()
+  png_files = []
+  changes_date = None
+  for f in files:
+    if f.endswith(".pdf"):
+      changes_date = f.replace(".pdf", "").replace("changes_", "")
+      for f2 in files:
+        if changes_date in f2 and f2.endswith(".png"):
+          png_files.append(f2)
+      break
+    
+  media = [InputMediaPhoto(media=FSInputFile(f"./data/changes/{f}")) for f in png_files]
+  
+  await message.edit_text("⏳ Проверяю...")
   is_group_in_changes = check_if_group_in_changes(user["group_name"], changes_date)
   
-  pdf_to_png(f"./data/changes/changes_{changes_date}.pdf", f"./data/changes/", changes_date)
-
-  # Собираем файлы изображений
-  files = []
-  files_paths = []
-  for f in os.listdir(f"./data/changes/"):
-    if f.endswith(".png") and changes_date in f:
-      files_paths.append(f"./data/changes/{f}")
-  files_paths.sort()
-  for path in files_paths:
-    files.append(FSInputFile(f"{path}"))
-
-  group = await get_group_by_id(user["group_id"])
-  text = (
-    f"Изменения на <b>{changes_date}</b>.\n"
-    f"Группа <b>{str(group['name']).capitalize()}</b> есть в списке изменений!\n"
-  ) if is_group_in_changes else (
-    f"<i>Группы <b>{str(group['name']).capitalize()}</b> нету в списке изменений. 😢</i>"
-    f"<i>Посмотреть изменения?</i>"
-  )
-  media = [InputMediaPhoto(media=f) for f in files]
-  media[0].caption = text  # Добавляем описание только к первой картинке
-  media[0].parse_mode = "html"
-
-  if len(media) == 1:
-    if is_group_in_changes:
-      await bot.send_photo(user["tg_id"], photo=files[0], caption=text, parse_mode="html")
-    else:
-      await bot.send_photo(user["tg_id"], photo=files[0], caption=text, parse_mode="html", reply_markup=kb.ask_changes_keyboard)
-      
-  elif len(media) > 1:
-    await bot.send_media_group(user["tg_id"], media=media)
-
+  if not is_group_in_changes:
+    await message.delete()
+    await bot.send_message(user["tg_id"],
+                           f"Группы <code>{user["group_name"].capitalize()}</code> <b>нет</b> в списке изменений."
+                           f"Посмотреть изменения?",
+                           parse_mode="html",
+                           reply_markup=kb.ask_changes_keyboard)
+  else:
+    await message.edit_text("⏳ Отправляю...")
+    text = f"Изменения на <b>{changes_date}</b>.\n" + f"Группа <code>{user["group_name"].capitalize()}</code> <b>есть</b> в списке изменений!"
+    if len(media) == 1:
+        await bot.send_photo(user["tg_id"], photo=files[0], caption=text,parse_mode="html")
+    elif len(media) > 1:
+      media[0].caption = text
+      media[0].parse_mode = "html"
+      await bot.send_media_group(user["tg_id"], media=media)
+  await message.delete()
+  
+  
 def check_if_group_in_changes(group_name: str, date: str):
   group_name = group_name.lower()
   with pdfplumber.open(f"./data/changes/changes_{date}.pdf") as pdf:
@@ -176,15 +183,14 @@ def check_if_group_in_changes(group_name: str, date: str):
 def get_changes_date(url: str):
 
     file_name = url.split('/')[-1]
-
     date_match = re.search(r'\d{2}\.\d{2}\.\d{2}', file_name)
 
     if date_match:
-        date = date_match.group(0)
-        return date
+      date = date_match.group(0)
+      return date
     else:
-        logger.debug(f"Date not found in the file name: {file_name}")
-        return None
+      logger.debug(f"Date not found in the file name: {file_name}")
+      return None
 
 def get_pdf_url_from_page():
     url = "https://ulstu.ru/education/kei/student/schedule/"
