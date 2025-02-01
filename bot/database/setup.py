@@ -19,7 +19,6 @@ sync_engine = create_engine(
   pool_size=5
 )
 
-
 session = async_sessionmaker(async_engine)
 
 class Base(DeclarativeBase):
