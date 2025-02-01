@@ -6,7 +6,21 @@ default_user_settings: dict = {
   "send_changes_updated": False,
 }
 
+CURRENT_WEEK_CORRECTION: int = -2
 
+def get_monday_of_week(week_number: int, year: int = None) -> datetime:
+    if year is None:
+        year = datetime.now().year
+        
+    first_thursday = datetime(year, 1, 4)
+    first_monday = first_thursday - timedelta(days=first_thursday.weekday())
+    return first_monday + timedelta(weeks=week_number - 1)
+
+def calculate_current_study_number_week():
+  current_week = datetime.now().isocalendar()[1]
+  return current_week + CURRENT_WEEK_CORRECTION
+
+print(calculate_current_study_number_week())
 
 def calculate_yesterday():
   """

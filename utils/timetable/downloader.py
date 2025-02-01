@@ -3,6 +3,7 @@ from utils.log import logger
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from PIL import Image
 
 from rich import print
@@ -16,9 +17,8 @@ login = os.getenv("LOGIN")
 password = os.getenv("PASSWORD")
 
 
-from selenium.common.exceptions import TimeoutException
 
-def download_timetable(driver, groups: list[str], make_screenshot: bool = False):
+def download_timetable(driver, groups: list[str], make_screenshot: bool = False, only_screenshot: bool = False):
     logger.debug(f"Started downloading timetable for groups: {groups}...")
     try:
         for group in groups:
@@ -75,10 +75,11 @@ def download_timetable(driver, groups: list[str], make_screenshot: bool = False)
                 logger.debug(f"Screenshot saved: {screenshot_path}")
 
             # Save HTML
-            html_path = f"./data/timetables/html/{group.lower()}-timetable.html"
-            with open(html_path, "w", encoding="utf-8") as file:
-                file.write(page_html)
-            logger.debug(f"HTML saved: {html_path}")
+            if not only_screenshot:
+                html_path = f"./data/timetables/html/{group.lower()}-timetable.html"
+                with open(html_path, "w", encoding="utf-8") as file:
+                    file.write(page_html)
+                logger.debug(f"HTML saved: {html_path}")
 
     except Exception as e:
         logger.exception(f"Error processing group {group}: {e}")

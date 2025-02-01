@@ -10,7 +10,7 @@ scheduler = AsyncIOScheduler()
 
 async def start_scheduler(bot: Bot):
     try:
-        scheduler.add_job(check_changes_job, 'interval', minutes=5, args=[bot])
+        scheduler.add_job(check_changes_job, 'interval', minutes=3, args=[bot])
         scheduler.add_job(send_new_timetable, CronTrigger(day_of_week="sun", hour=14, minute=00), args=[bot])
         scheduler.start()
     except Exception as e:

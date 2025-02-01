@@ -5,6 +5,7 @@ import re
 import json
 import os
 from variables import prefixes_map, subjects_map, postfixes
+
 START_STUDY_WEEK_NUM = 34 # Неделя с которой началась учеба в 2024 году
 
 ADDED_WEEKS = 20 # В переходе на 2 семестр 2024/2025 срезали 20 недель (теперь над расписанием пишется неделя начиная с 1)

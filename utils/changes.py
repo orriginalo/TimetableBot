@@ -1,4 +1,3 @@
-import asyncio
 from sqlalchemy import Boolean, cast, func
 from bot.database.models import User
 from bot.database.queries.group import get_group_by_name
@@ -106,10 +105,10 @@ async def send_changes_to_users(bot: Bot, date: str):
     group = await get_group_by_name(user["group_name"])
     text = (
       f"🔔 Появились изменения на <b>{date}</b>.\n"
-      f"<b>Группа {group['name']} есть в списке изменений!</b>\n"
+      f"Группа <code>{user["group_name"].capitalize()}</code> <b>есть</b> в списке изменений!"
     ) if check_if_group_in_changes(group["name"], date) else (
       f"🔔 Появились изменения на <b>{date}</b>.\n"
-      f"<i>Группы {group['name']} нету в списке изменений. 😢</i>"
+      f"Группы <code>{user["group_name"].capitalize()}</code> <b>нет</b> в списке изменений."
     )
 
     # Если только 1 фото → отправляем обычное `send_photo()`
@@ -152,7 +151,7 @@ async def instantly_send_changes(bot: Bot, user: dict):
   if not is_group_in_changes:
     await message.delete()
     await bot.send_message(user["tg_id"],
-                           f"Группы <code>{user["group_name"].capitalize()}</code> <b>нет</b> в списке изменений."
+                           f"Группы <code>{user["group_name"].capitalize()}</code> <b>нет</b> в списке изменений.\n"
                            f"Посмотреть изменения?",
                            parse_mode="html",
                            reply_markup=kb.ask_changes_keyboard)
@@ -165,7 +164,7 @@ async def instantly_send_changes(bot: Bot, user: dict):
       media[0].caption = text
       media[0].parse_mode = "html"
       await bot.send_media_group(user["tg_id"], media=media)
-  await message.delete()
+    await message.delete()
   
   
 def check_if_group_in_changes(group_name: str, date: str):
