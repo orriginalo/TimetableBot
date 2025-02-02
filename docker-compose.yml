@@ -10,6 +10,7 @@ services:
     env_file:
       - .env
     environment:
+      - TZ=Europe/Samara
       - PYTHONUNBUFFERED=1
     restart: no
     networks:
