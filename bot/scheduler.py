@@ -4,7 +4,6 @@ from apscheduler.triggers.cron import CronTrigger
 from utils.timetable.sender import send_new_timetable
 from utils.changes import check_changes_job
 from utils.log import logger
-from utils.selenium_driver import driver
 
 scheduler = AsyncIOScheduler()
 

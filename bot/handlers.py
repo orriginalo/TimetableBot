@@ -11,8 +11,6 @@ import bot.keyboards as kb
 from utils.changes import instantly_send_changes
 from utils.timetable.screenshoter import *
 
-from utils.selenium_driver import driver
-
 class SetGroup(StatesGroup):
   group_name = State()
   
@@ -40,25 +38,25 @@ async def _(msg: Message, state: FSMContext):
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
   group = await get_group_by_name(user["group_name"])
-  await screenshot_timetable_next_week(msg, driver, group["name"])
+  await screenshot_timetable_next_week(msg, group["name"])
 
 @router.message(F.text == "Текущая неделя ⬅️")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
   group = await get_group_by_name(user["group_name"])
-  await screenshot_timetable(msg, driver, group["name"])
+  await screenshot_timetable(msg, group["name"])
 
 @router.message(F.text == "⏭️ Завтра")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
   group = await get_group_by_name(user["group_name"])
-  await screenshot_timetable_tomorrow(msg, driver, group["name"])
+  await screenshot_timetable_tomorrow(msg, group["name"])
 
 @router.message(F.text == "Сегодня ⬅️")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
   group = await get_group_by_name(user["group_name"])
-  await screenshot_timetable_today(msg, driver, group["name"])
+  await screenshot_timetable_today(msg, group["name"])
 
 @router.message(F.text == "📋 Изменения")
 async def _(msg: Message):
@@ -84,7 +82,7 @@ async def _(call: CallbackQuery, state: FSMContext):
 async def _(msg: Message, state: FSMContext):
   group_name = msg.text.strip().lower()
   if await get_group_by_name(group_name):
-    await screenshot_timetable(msg, driver, group_name, other_group=True)
+    await screenshot_timetable(msg, group_name, other_group=True)
     await state.clear()
   else:
     await msg.answer("Группа не найдена. Попробуй еще раз.")

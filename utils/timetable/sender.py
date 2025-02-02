@@ -5,7 +5,7 @@ from bot.database.models import User
 from bot.database.queries.group import get_group_by_name
 from bot.database.queries.user import get_users
 from utils.log import logger
-from utils.selenium_driver import driver
+from utils.selenium_driver import driver_pool
 import variables as var
 from aiogram import Bot
 from PIL import Image
@@ -14,6 +14,8 @@ margin = 15
 CACHE_DURATION=timedelta(minutes=7)
 
 async def send_new_timetable(bot: Bot):
+  driver = await driver_pool.acquire()
+  try:
     logger.info("Sending timetable to next week...")
 
     users_with_notifications = await get_users(User.settings['send_timetable_new_week'].as_boolean() == True)
@@ -69,3 +71,5 @@ async def send_new_timetable(bot: Bot):
           logger.error(f"Ошибка при отправке скриншота: {e}")
 
       return screenshot_path
+  finally:
+    driver_pool.release(driver)

@@ -6,7 +6,6 @@ from utils.log import logger
 from bot.handlers import router
 from bot.database.core import create_tables
 from bot.scheduler import start_scheduler
-from utils.selenium_driver import driver
 from bot.middlewares import CheckState, MsgLoggerMiddleware
 
 from aiogram import Bot, Dispatcher
@@ -43,8 +42,8 @@ async def main():
   created_folders_count = await create_data_directory()
   logger.info(f"Data directory checked (total {created_folders_count} folders created)")
   
-  driver.auth(login, password)
-  logger.info("Driver authenticated")
+  # await driver.auth(login, password)
+  # logger.info("Driver authenticated")
   
   await create_tables(drop_tables=False, populate_groups=False)
   logger.info("Database tables created")

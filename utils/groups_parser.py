@@ -1,5 +1,3 @@
-import re
-
 from bs4 import BeautifulSoup
 from bot.database.queries.group import add_group, delete_all_groups
 from selenium.webdriver.common.by import By

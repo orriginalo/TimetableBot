@@ -7,11 +7,9 @@ from datetime import datetime, timedelta
 from aiogram import Bot
 from aiogram.types import FSInputFile, InputMediaPhoto, Message
 from utils.log import logger
-from utils.selenium_driver import driver
-from utils.timetable.downloader import download_timetable
 from bot.database.models import User
 from bot.database.queries.group import get_group_by_name
-from bot.database.queries.user import get_user_by_id, get_users
+from bot.database.queries.user import get_users
 from bot.database.queries.settings import get_setting, set_setting
 from pdf2image import convert_from_path
 from rich import print
