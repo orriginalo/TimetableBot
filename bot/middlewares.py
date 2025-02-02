@@ -23,11 +23,11 @@ class CheckState(Filter):
     ) -> bool:
 
     user = await get_user_by_id(message.from_user.id)
-    if (user["group_name"] is None) and ((await state.get_state()) != "SetGroup:group_name") and (message.text != "/start"):
-      print("Idet nahui na group_name blyad :(")
-      return False
-    
-    return True
+    if user:
+        if (user["group_name"] is None) and ((await state.get_state()) != "SetGroup:group_name") and (message.text != "/start"):
+            print("Idet nahui na group_name blyad :(")
+            return False
+        return True
 
 class MsgLoggerMiddleware(BaseException):
 
