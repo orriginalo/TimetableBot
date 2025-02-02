@@ -18,9 +18,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-margin = 15
-CACHE_DURATION = timedelta(minutes=7)
-
 def keep_only_day(driver, target_day):
     target_day = target_day.strip().lower()
     rows = WebDriverWait(driver, 10).until(
@@ -68,7 +65,7 @@ async def screenshot_timetable(message: Message, group_name: str, other_group: b
         # Проверка существования файла и времени его последней модификации
         if os.path.exists(screenshot_path):
             last_modified_time = datetime.fromtimestamp(os.path.getmtime(screenshot_path))
-            if datetime.now() - last_modified_time < CACHE_DURATION:
+            if datetime.now() - last_modified_time < var.CACHE_DURATION:
                 logger.debug(f"Using cached screenshot: {screenshot_path}")
                 try:
                     photo = FSInputFile(screenshot_path)
@@ -96,10 +93,10 @@ async def screenshot_timetable(message: Message, group_name: str, other_group: b
 
         rect = parent_container.rect
         crop_box = (
-            max(0, int(rect['x']) - margin),
-            max(0, int(rect['y']) - margin),
-            int(rect['x'] + rect['width'] + margin),
-            int(rect['y'] + rect['height'] + margin)
+            max(0, int(rect['x']) - var.MARGIN),
+            max(0, int(rect['y']) - var.MARGIN),
+            int(rect['x'] + rect['width'] + var.MARGIN),
+            int(rect['y'] + rect['height'] + var.MARGIN)
         )
         image = Image.open(screenshot_path)
         cropped_image = image.crop(crop_box)
@@ -132,7 +129,7 @@ async def screenshot_timetable_next_week(message: Message, group_name: str):
         # Проверка существования файла и времени его последней модификации
         if os.path.exists(screenshot_path):
             last_modified_time = datetime.fromtimestamp(os.path.getmtime(screenshot_path))
-            if datetime.now() - last_modified_time < CACHE_DURATION:
+            if datetime.now() - last_modified_time < var.CACHE_DURATION:
                 logger.debug(f"Using cached screenshot: {screenshot_path}")
                 try:
                     photo = FSInputFile(screenshot_path)
@@ -155,10 +152,10 @@ async def screenshot_timetable_next_week(message: Message, group_name: str):
 
         rect = parent_container.rect
         crop_box = (
-            max(0, int(rect['x']) - margin),
-            max(0, int(rect['y']) - margin),
-            int(rect['x'] + rect['width'] + margin),
-            int(rect['y'] + rect['height'] + margin)
+            max(0, int(rect['x']) - var.MARGIN),
+            max(0, int(rect['y']) - var.MARGIN),
+            int(rect['x'] + rect['width'] + var.MARGIN),
+            int(rect['y'] + rect['height'] + var.MARGIN)
         )
         image = Image.open(screenshot_path)
         cropped_image = image.crop(crop_box)
@@ -195,7 +192,7 @@ async def screenshot_timetable_tomorrow(message: Message, group_name: str):
 
         if os.path.exists(screenshot_path):
             last_modified_time = datetime.fromtimestamp(os.path.getmtime(screenshot_path))
-            if datetime.now() - last_modified_time < CACHE_DURATION:
+            if datetime.now() - last_modified_time < var.CACHE_DURATION:
                 logger.debug(f"Using cached screenshot: {screenshot_path}")
                 try:
                     photo = FSInputFile(screenshot_path)
@@ -243,12 +240,11 @@ async def screenshot_timetable_tomorrow(message: Message, group_name: str):
             
             # Обрезка изображения
             rect = parent_container.rect
-            margin = 10
             crop_box = (
-                max(0, int(rect['x']) - margin),
-                max(0, int(rect['y']) - margin),
-                int(rect['x'] + rect['width'] + margin),
-                int(rect['y'] + rect['height'] + margin)
+                max(0, int(rect['x']) - var.MARGIN),
+                max(0, int(rect['y']) - var.MARGIN),
+                int(rect['x'] + rect['width'] + var.MARGIN),
+                int(rect['y'] + rect['height'] + var.MARGIN)
             )
             
             with Image.open(screenshot_path) as img:
@@ -286,7 +282,7 @@ async def screenshot_timetable_today(message: Message, group_name: str):
 
         if os.path.exists(screenshot_path):
             last_modified_time = datetime.fromtimestamp(os.path.getmtime(screenshot_path))
-            if datetime.now() - last_modified_time < CACHE_DURATION:
+            if datetime.now() - last_modified_time < var.CACHE_DURATION:
                 logger.debug(f"Using cached screenshot: {screenshot_path}")
                 try:
                     photo = FSInputFile(screenshot_path)
@@ -334,12 +330,11 @@ async def screenshot_timetable_today(message: Message, group_name: str):
             
             # Обрезка изображения
             rect = parent_container.rect
-            margin = 10
             crop_box = (
-                max(0, int(rect['x']) - margin),
-                max(0, int(rect['y']) - margin),
-                int(rect['x'] + rect['width'] + margin),
-                int(rect['y'] + rect['height'] + margin)
+                max(0, int(rect['x']) - var.MARGIN),
+                max(0, int(rect['y']) - var.MARGIN),
+                int(rect['x'] + rect['width'] + var.MARGIN),
+                int(rect['y'] + rect['height'] + var.MARGIN)
             )
             
             with Image.open(screenshot_path) as img:

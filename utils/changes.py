@@ -33,10 +33,10 @@ async def check_changes_job(bot: Bot):
             await pdf_to_png(f"./data/changes/changes_{date}.pdf", f"./data/changes/", date)
         
 
-
 def write_pdf_to_file(path_to_file: str, content: bytes):
     with open(path_to_file, "wb") as f:
         f.write(content)
+
 
 async def pdf_to_png(pdf_path: str, output_folder: str, date: str):
     # Конвертируем PDF в список изображений (по одной картинке на страницу)
@@ -80,6 +80,7 @@ async def download_pdf_from_url(url: str):
     path_to_file = f"./data/changes/changes_{changes_date}.pdf"
     await asyncio.to_thread(write_pdf_to_file, path_to_file, response.content)
     logger.debug(f"PDF file is successfully saved as {path_to_file}")
+
 
 async def send_changes_to_users(bot: Bot, date: str):
     logger.info("Sending changes to users")

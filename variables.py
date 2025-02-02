@@ -1,3 +1,4 @@
+from asyncio.log import logger
 from datetime import datetime, timedelta
 
 default_user_settings: dict = {
@@ -17,6 +18,29 @@ weekdays = {
   5: "сбт",
   6: "вск"
 }
+
+MARGIN = 15
+CACHE_DURATION = timedelta(minutes=7)
+
+async def update_cache_duration():
+    global CACHE_DURATION
+    new_duration = None
+    current_hour = datetime.now().hour
+
+    # Устанавливаем длительность кэша в зависимости от промежутков времени
+    if 6 <= current_hour < 10:
+        new_duration = timedelta(minutes=20)  # Утро
+    elif 10 <= current_hour < 18:
+        new_duration = timedelta(minutes=40)  # День
+    elif 18 <= current_hour < 23:
+        new_duration = timedelta(minutes=7)  # Вечер
+    elif 23 <= current_hour < 6:
+        new_duration = timedelta(minutes=50)  # Ночь
+
+    if new_duration != CACHE_DURATION:
+        CACHE_DURATION = new_duration
+        logger.info(f"Cache duration updated to {CACHE_DURATION}")
+      
 
 def get_monday_of_week(week_number: int, year: int = None) -> datetime:
     if year is None:
