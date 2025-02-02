@@ -8,6 +8,16 @@ default_user_settings: dict = {
 
 CURRENT_WEEK_CORRECTION: int = -2
 
+weekdays = {
+  0: "пнд",
+  1: "втр",
+  2: "срд",
+  3: "чтв",
+  4: "птн",
+  5: "сбт",
+  6: "вск"
+}
+
 def get_monday_of_week(week_number: int, year: int = None) -> datetime:
     if year is None:
         year = datetime.now().year

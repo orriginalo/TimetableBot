@@ -97,7 +97,7 @@ class Driver:
         # Ждём появления контейнера с расписанием (находим по наличию класса "table-responsive")
         try:
             timetable_container = WebDriverWait(self.driver, 10).until(
-                EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'table-responsive')]"))
+                EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'table-responsive')]/.."))
             )
         except TimeoutException:
             logger.error(f"Контейнер с расписанием не найден для группы {group_name} за 10 секунд.")
@@ -109,6 +109,10 @@ class Driver:
             week_element = WebDriverWait(self.driver, 5).until(
                 EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'week-num')]"))
             )
+            self.driver.execute_script(f"""
+                                       let part = arguments[0].innerHTML;
+                                       arguments[0].innerHTML += '. {group_name.capitalize()}';
+                                       """, week_element)
         except TimeoutException:
             logger.debug("Элемент 'week-num' не найден, ищем в 'week'.")
 
@@ -153,8 +157,19 @@ class Driver:
             document.querySelector('.layout-panel')?.remove();
             document.querySelector('.input-group')?.remove();
             document.querySelector('.week')?.remove();
-            document.querySelector('.week-num')?.remove();
         """)
+            # document.querySelector('.week-num')?.remove();
+        header_cols = WebDriverWait(driver, 10).until(
+            EC.visibility_of_all_elements_located((By.XPATH, "//div[@class='table-header-col']/div"))
+        )
+
+        for col in header_cols:
+            if any(weekday in col.text for weekday in ["Пнд", "Втр", "Срд", "Чтв", "Птн", "Сбт", "Вск"]):
+                # Удаляем всё после переноса строки (включая дату)
+                self.driver.execute_script("""
+                    let parts = arguments[0].innerHTML.split('<br>');
+                    arguments[0].innerHTML = parts[0].trim();
+                """, col)
 
         # Прокручиваем страницу так, чтобы контейнер был виден
         self.driver.execute_script("arguments[0].scrollIntoView(true);", timetable_container)

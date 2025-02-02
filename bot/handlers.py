@@ -61,7 +61,7 @@ async def _(msg: Message):
 @router.message(F.text == "📃 Изменения")
 async def _(msg: Message):
   print("Handling changes")
-  await instantly_send_changes(msg.bot, await get_user_by_id(msg.from_user.id))
+  await instantly_send_changes(msg, await get_user_by_id(msg.from_user.id), with_ask=True)
 
 @router.message(F.text == "Сменить группу 🔄️")
 async def _(msg: Message, state: FSMContext):
@@ -70,7 +70,7 @@ async def _(msg: Message, state: FSMContext):
 
 @router.message(F.text == "❔Расписание другой группы❔")
 async def _(msg: Message, state: FSMContext):
-  await msg.answer("Введи название группы", parse_mode="html", reply_markup=ReplyKeyboardRemove())
+  await msg.answer("Введи название группы", parse_mode="html")
   await state.set_state(SeeOtherTimetable.group_name)
 
 @router.callback_query(F.data == "back")
@@ -83,10 +83,10 @@ async def _(call: CallbackQuery, state: FSMContext):
 async def _(msg: Message, state: FSMContext):
   group_name = msg.text.strip().lower()
   if await get_group_by_name(group_name):
-    await screenshot_timetable(driver, group_name)
-    # await msg.answer("Группа задана.", reply_markup=kb.main_keyboard)
-    # await update_user(msg.from_user.id, group_name=group_name)
+    await screenshot_timetable(msg, driver, group_name, other_group=True)
     await state.clear()
+  else:
+    await msg.answer("Группа не найдена. Попробуй еще раз.")
 
 @router.message(Command("settings"))
 async def show_settings(message: Message, state: FSMContext):
@@ -118,16 +118,11 @@ async def settings_handler(call: CallbackQuery):
   await call.message.edit_reply_markup(reply_markup=updated_kb)
 
 @router.callback_query(F.data.contains("_changes"))
-async def _(callback: CallbackQuery):
-  condition = callback.data.split("_")[0]
-  # Checking changes logic
-  print(condition)
-  # 
-  changes_date = "placeholder"
+async def _(call: CallbackQuery):
+  condition = call.data.split("_")[0]
   match condition:
     case "show":
-      await callback.message.delete()
-      await callback.message.answer(f"Изменения на <b>{changes_date}</b>", parse_mode="html")
+      await instantly_send_changes(call.message, await get_user_by_id(call.from_user.id), with_ask=False)
     case "dont-show":
-      await callback.message.delete()
+      await call.message.delete()
       
