@@ -1,4 +1,9 @@
-import utils.selenium_driver as d
 import asyncio
+import asyncpg
 
-asyncio.run(d.main())
+async def test_db():
+  conn = await asyncpg.connect(user="timetablebot", password="timetablebot", database="timetablebot", host="localhost")
+  print("Connected successfully!")
+  await conn.close()
+
+asyncio.run(test_db())
