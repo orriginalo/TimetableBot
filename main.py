@@ -46,7 +46,7 @@ async def main():
   driver.auth(login, password)
   logger.info("Driver authenticated")
   
-  await create_tables(drop_tables=True, populate_groups=True)
+  await create_tables(drop_tables=False, populate_groups=False)
   logger.info("Database tables created")
   
   await start_scheduler(bot)
