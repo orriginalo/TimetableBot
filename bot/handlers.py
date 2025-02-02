@@ -56,9 +56,11 @@ async def _(msg: Message):
 
 @router.message(F.text == "Сегодня ⬅️")
 async def _(msg: Message):
-  pass
+  user = await get_user_by_id(msg.from_user.id)
+  group = await get_group_by_name(user["group_name"])
+  await screenshot_timetable_today(msg, driver, group["name"])
 
-@router.message(F.text == "📃 Изменения")
+@router.message(F.text == "📋 Изменения")
 async def _(msg: Message):
   print("Handling changes")
   await instantly_send_changes(msg, await get_user_by_id(msg.from_user.id), with_ask=True)

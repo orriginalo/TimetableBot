@@ -5,7 +5,7 @@ main_keyboard = ReplyKeyboardMarkup(
   keyboard=[
     [KeyboardButton(text="⏭️ След. неделя"), KeyboardButton(text="Текущая неделя ⬅️")],
     [KeyboardButton(text="⏭️ Завтра"), KeyboardButton(text="Сегодня ⬅️")],
-    [KeyboardButton(text="📃 Изменения"), KeyboardButton(text="Сменить группу 🔄️")],
+    [KeyboardButton(text="📋 Изменения"), KeyboardButton(text="Сменить группу 🔄️")],
     [KeyboardButton(text="❔Расписание другой группы❔")],
   ],
   resize_keyboard=True,

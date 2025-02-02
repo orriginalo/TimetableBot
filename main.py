@@ -24,7 +24,25 @@ dp.message.filter(CheckState())
 login = os.getenv('LOGIN')
 password = os.getenv('PASSWORD')
 
+async def create_data_directory():
+    folders = [
+        "./data/changes",
+        "./data/screenshots",
+        "./data/database",
+        "./data/logs",
+    ]
+    counter: int = 0
+    for folder in folders:
+      if not os.path.exists(folder):
+        os.makedirs(folder, exist_ok=True)
+        counter += 1
+        logger.debug(f"Data directory created: {folder}")
+    return counter
+
 async def main():
+  created_folders_count = await create_data_directory()
+  logger.info(f"Data directory checked (total {created_folders_count} folders created)")
+  
   driver.auth(login, password)
   logger.info("Driver authenticated")
   

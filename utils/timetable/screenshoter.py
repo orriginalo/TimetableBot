@@ -68,11 +68,11 @@ async def screenshot_timetable(message: Message, driver: Driver, group_name: str
         if other_group:
             await status_message.delete()
             await message.answer(f"📭 <b>Расписания на текущую неделю нет</b>.", parse_mode="html", reply_markup=kb.main_keyboard) 
-            logger.error(f"Текущая неделя для группы {group_name} не найдена.")
+            logger.warning(f"Текущая неделя для группы {group_name} не найдена.")
             return None
         else:
             await status_message.edit_text(f"📭 <b>Расписания на текущую неделю нет</b>.", parse_mode="html") 
-            logger.error(f"Текущая неделя для группы {group_name} не найдена.")
+            logger.warning(f"Текущая неделя для группы {group_name} не найдена.")
             return None
 
     driver.save_screenshot(screenshot_path)
@@ -126,7 +126,7 @@ async def screenshot_timetable_next_week(message: Message, driver: Driver, group
     if parent_container is None:
         await status_message.delete()
         await message.answer(f"📭 <b>Расписания на следующую неделю нет</b>.", parse_mode="html") 
-        logger.error(f"Следующая неделя для группы {group_name} не найдена.")
+        logger.warning(f"Следующая неделя для группы {group_name} не найдена.")
         return None
 
     driver.save_screenshot(screenshot_path)
@@ -166,6 +166,18 @@ async def screenshot_timetable_tomorrow(message: Message, driver: Driver, group_
     screenshot_path = f"./data/screenshots/tomorrow_{group_name.lower()}_{tomorrow_str}.png"
     # os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
 
+    if os.path.exists(screenshot_path):
+        last_modified_time = datetime.fromtimestamp(os.path.getmtime(screenshot_path))
+        if datetime.now() - last_modified_time < CACHE_DURATION:
+            logger.debug(f"Using cached screenshot: {screenshot_path}")
+            try:
+                photo = FSInputFile(screenshot_path)
+                await message.answer_photo(photo=photo, caption=f"🗓️ Расписание на завтра <i>({tomorrow_str})</i>", parse_mode="html")
+            except Exception as e:
+                await status_message.edit_text(f"❌ Ошибка при отправке. Попробуйте еще раз.")
+                logger.error(f"Ошибка при отправке скриншота: {e}")
+            return screenshot_path
+
     status_message = await message.answer("⏳ Проверяю расписание...")
 
     try:
@@ -177,43 +189,13 @@ async def screenshot_timetable_tomorrow(message: Message, driver: Driver, group_
             await status_message.edit_text("📭 <b>Завтра нет пар.</b>", parse_mode="html")
             return None
 
-        # Удаляем все элементы кроме завтрашнего дня
-        driver.execute_script(f"""
-            // Удаляем заголовки недель
-            document.querySelector('.week')?.remove();
-            document.querySelector('.week-num')?.remove();
-            
-            // Находим все строки с днями
-            const allRows = Array.from(document.querySelectorAll('.row'));
-            
-            // Оставляем только строку с завтрашней датой
-            let targetRow = null;
-            for(const row of allRows) {{
-                const header = row.querySelector('.table-header-col');
-                if(header && header.textContent.toLowerCase().includes("{target_date}")) {{
-                    targetRow = row;
-                    break;
-                }}
-            }}
-            
-            // Удаляем все другие строки
-            if(targetRow) {{
-                const container = targetRow.closest('.container');
-                while(container.firstChild) container.removeChild(container.firstChild);
-                container.appendChild(targetRow);
-            }}
-            
-            // Удаляем пустые колонки
-            document.querySelectorAll('.table-col').forEach(col => {{
-                if(col.textContent.trim() === '-') col.remove();
-            }});
-        """)
 
         # Дополнительная очистка интерфейса
         driver.execute_script("""
             document.querySelector('nav.navbar')?.remove();
             document.querySelector('.input-group')?.remove();
             document.querySelector('.layout-panel')?.remove();
+            document.querySelector('.week')?.remove();
         """)
 
         # Прокрутка и скриншот
@@ -247,12 +229,98 @@ async def screenshot_timetable_tomorrow(message: Message, driver: Driver, group_
         # Отправка результата
         await message.answer_photo(
             photo=FSInputFile(screenshot_path),
-            caption=f"Расписание {group_name} на {tomorrow_str}"
+            caption=f"🗓️ Расписание на завтра <i>({tomorrow_str})</i>",
+            parse_mode="html"
         )
         await status_message.delete()
 
     except Exception as e:
         await status_message.edit_text(f"❌ Ошибка при отправке. Попробуйте еще раз.")
         logger.error(f"Error in tomorrow screenshot: {str(e)}")
+
+    return screenshot_path
+
+
+async def screenshot_timetable_today(message: Message, driver: Driver, group_name: str):
+    logger.debug(f"Started screenshotting today timetable for {group_name}")
+    
+    # Определяем дату завтра и форматируем для поиска
+    today = datetime.now()
+    today_str = today.strftime("%d.%m.%y")
+    
+    screenshot_path = f"./data/screenshots/tomorrow_{group_name.lower()}_{today_str}.png"
+    # os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
+
+    if os.path.exists(screenshot_path):
+        last_modified_time = datetime.fromtimestamp(os.path.getmtime(screenshot_path))
+        if datetime.now() - last_modified_time < CACHE_DURATION:
+            logger.debug(f"Using cached screenshot: {screenshot_path}")
+            try:
+                photo = FSInputFile(screenshot_path)
+                await message.answer_photo(photo=photo, caption=f"🗓️ Расписание на сегодня <i>({today_str})</i>", parse_mode="html")
+            except Exception as e:
+                await status_message.edit_text(f"❌ Ошибка при отправке. Попробуйте еще раз.")
+                logger.error(f"Ошибка при отправке скриншота: {e}")
+            return screenshot_path
+
+    status_message = await message.answer("⏳ Проверяю расписание...")
+
+    try:
+        # Определяем нужно ли грузить следующую неделю
+        next_week = today.weekday() == 0  # Понедельник = следующая неделя
+        parent_container = driver.select_timetable(group_name, next_week=next_week)
+        
+        if parent_container is None:
+            await status_message.edit_text("📭 <b>Сегодня нет пар.</b>", parse_mode="html")
+            return None
+
+
+        # Дополнительная очистка интерфейса
+        driver.execute_script("""
+            document.querySelector('nav.navbar')?.remove();
+            document.querySelector('.input-group')?.remove();
+            document.querySelector('.layout-panel')?.remove();
+            document.querySelector('.week')?.remove();
+        """)
+
+        # Прокрутка и скриншот
+        driver.execute_script("arguments[0].scrollIntoView({behavior: 'auto', block: 'center'});", parent_container)
+        time.sleep(0.5)
+        
+        
+        tomorrow_weekday = datetime.today().weekday()
+        target_day = var.weekdays[tomorrow_weekday]
+        print(target_day)
+        
+        keep_only_day(driver, target_day)
+        
+        # Сохранение и обрезка скриншота
+        driver.save_screenshot(screenshot_path)
+        
+        # Обрезка изображения
+        rect = parent_container.rect
+        margin = 10
+        crop_box = (
+            max(0, int(rect['x']) - margin),
+            max(0, int(rect['y']) - margin),
+            int(rect['x'] + rect['width'] + margin),
+            int(rect['y'] + rect['height'] + margin)
+        )
+        
+        with Image.open(screenshot_path) as img:
+            cropped = img.crop(crop_box)
+            cropped.save(screenshot_path)
+
+        # Отправка результата
+        await message.answer_photo(
+            photo=FSInputFile(screenshot_path),
+            caption=f"🗓️ Расписание на сегодня <i>({today_str})</i>",
+            parse_mode="html"
+        )
+        await status_message.delete()
+
+    except Exception as e:
+        await status_message.edit_text(f"❌ Ошибка при отправке. Попробуйте еще раз.")
+        logger.error(f"Error in today screenshot: {str(e)}")
 
     return screenshot_path
