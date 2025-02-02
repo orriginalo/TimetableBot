@@ -62,7 +62,6 @@ async def _(msg: Message):
 
 @router.message(F.text == "📋 Изменения")
 async def _(msg: Message):
-  print("Handling changes")
   await instantly_send_changes(msg, await get_user_by_id(msg.from_user.id), with_ask=True)
 
 @router.message(F.text == "Сменить группу 🔄️")
@@ -102,7 +101,6 @@ async def show_settings(message: Message, state: FSMContext):
 async def settings_handler(call: CallbackQuery):
   setting_name = call.data.replace("_setting", "").replace("disable_", "").replace("enable_", "")
   setting_condition = False if call.data.split("_")[0] == "disable" else True
-  print(setting_name, setting_condition)
   user = await get_user_by_id(call.from_user.id)
   user_settings = user["settings"]
   user_settings_copy = user_settings.copy()

@@ -28,19 +28,34 @@ def keep_only_day(driver, target_day):
         EC.presence_of_all_elements_located((By.CLASS_NAME, "row"))
     )
     
+    has_lessons = False
+    
     for row in rows:
         try:
-            header = row.find_element(By.XPATH, ".//div[@class='table-header-col']")
-            header_text = header.text
+            header = row.find_element(By.XPATH, ".//div[@class='table-header-col']/div")
+            header_text = header.text.split()[0].strip().lower()
             
-            if target_day in header_text.lower() or header_text.lower().startswith("пара"):
-                continue  # Оставляем эту строку
+            if header_text == target_day:
+                # Проверяем наличие пар
+                lessons = row.find_elements(By.XPATH, ".//div[@class='table-col']")
+                for lesson in lessons:
+                    content = lesson.find_element(By.XPATH, "./div[2]").text.strip()
+                    if content != "-":
+                        has_lessons = True
+                        break
+                
+                # Если есть хотя бы одна пара - оставляем строку
+                if has_lessons:
+                    continue
+                else:
+                    driver.execute_script("arguments[0].remove();", row)
+                    return False
             else:
-                # Удаляем строки с другими днями
                 driver.execute_script("arguments[0].remove();", row)
         except:
-            # Пропускаем строки без заголовка дня
             continue
+    
+    return has_lessons
 
 async def screenshot_timetable(message: Message, driver: Driver, group_name: str, other_group: bool = False):
     logger.debug(f"Started screenshotting timetable for group {group_name} (текущая неделя)...")
@@ -105,7 +120,7 @@ async def screenshot_timetable_next_week(message: Message, driver: Driver, group
     logger.debug(f"Started screenshotting timetable for group {group_name} (текущая неделя)...")
     week_num = var.calculate_current_study_number_week() + 1
     monday_of_week = var.get_monday_of_week(week_num).strftime("%d.%m.%y")
-    screenshot_path = f"./data/screenshots/full_{group_name.lower()}_{monday_of_week}.png"
+    screenshot_path = f"./data/screenshots/nextweek_{group_name.lower()}_{monday_of_week}.png"
 
     # Проверка существования файла и времени его последней модификации
     if os.path.exists(screenshot_path):
@@ -205,9 +220,11 @@ async def screenshot_timetable_tomorrow(message: Message, driver: Driver, group_
         
         tomorrow_weekday = (datetime.today()+timedelta(days=1)).weekday()
         target_day = var.weekdays[tomorrow_weekday]
-        print(target_day)
         
-        keep_only_day(driver, target_day)
+        has_lessons = keep_only_day(driver, target_day)
+        if not has_lessons:
+            await status_message.edit_text("📭 <b>Завтра нет пар.</b>", parse_mode="html")
+            return None
         
         # Сохранение и обрезка скриншота
         driver.save_screenshot(screenshot_path)
@@ -290,9 +307,11 @@ async def screenshot_timetable_today(message: Message, driver: Driver, group_nam
         
         tomorrow_weekday = datetime.today().weekday()
         target_day = var.weekdays[tomorrow_weekday]
-        print(target_day)
         
-        keep_only_day(driver, target_day)
+        has_lessons = keep_only_day(driver, target_day)
+        if not has_lessons:
+            await status_message.edit_text("📭 <b>Сегодня нет пар.</b>", parse_mode="html")
+            return None
         
         # Сохранение и обрезка скриншота
         driver.save_screenshot(screenshot_path)

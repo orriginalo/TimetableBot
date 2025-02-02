@@ -30,6 +30,11 @@ async def check_changes_job(bot: Bot):
             logger.info(f"Changes for tomorrow found: {filename}")
             await set_setting("last_send_changes_date", last_send_date)
             await send_changes_to_users(bot, await get_changes_date(filename))
+        else:
+            date = get_last_png_changes()["latest_date"]
+            await pdf_to_png(f"./data/changes/changes_{date}.pdf", f"./data/changes/", date)
+        
+
 
 def write_pdf_to_file(path_to_file: str, content: bytes):
     with open(path_to_file, "wb") as f:
@@ -42,9 +47,9 @@ async def pdf_to_png(pdf_path: str, output_folder: str, date: str):
     # Сохраняем каждую страницу как PNG
     for i, img in enumerate(images):
         img_path = f"{output_folder}/{date}_{i+1}.png"
-        if not os.path.exists(img_path):
-            await asyncio.to_thread(img.save, img_path, "PNG")
-  
+        await asyncio.to_thread(img.save, img_path, "PNG")
+        logger.debug(f"Image saved: {img_path}")
+
 async def check_if_exists_changes_pdf_to_tomorrow():
     path_to_files = "./data/changes"
     files = await asyncio.to_thread(os.listdir, path_to_files)
@@ -220,7 +225,6 @@ async def check_if_group_in_changes(group_name: str, date: str):
                 text = text.splitlines()
                 for line in text:
                     if group_name in line and all(keyword not in line for keyword in ["прием", "подготовка", "пересдача", "консультация", "профориентационное"]):
-                        print(line)
                         return True
         return False
 

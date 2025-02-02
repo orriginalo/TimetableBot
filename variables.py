@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 
 default_user_settings: dict = {
-  "send_timetable_new_week": False,
+  "send_timetable_new_week": True,
   "send_timetable_updated": False,
-  "send_changes_updated": False,
+  "send_changes_updated": True,
 }
 
 CURRENT_WEEK_CORRECTION: int = -2
@@ -29,8 +29,6 @@ def get_monday_of_week(week_number: int, year: int = None) -> datetime:
 def calculate_current_study_number_week():
   current_week = datetime.now().isocalendar()[1]
   return current_week + CURRENT_WEEK_CORRECTION
-
-print(calculate_current_study_number_week())
 
 def calculate_yesterday():
   """
