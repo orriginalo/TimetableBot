@@ -10,6 +10,7 @@ scheduler = AsyncIOScheduler()
 
 async def start_scheduler(bot: Bot):
     try:
+        check_changes_job(bot)
         scheduler.add_job(check_changes_job, 'interval', minutes=3, args=[bot])
         scheduler.add_job(send_new_timetable, CronTrigger(day_of_week="sun", hour=14, minute=00), args=[bot])
         scheduler.start()
