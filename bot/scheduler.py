@@ -11,7 +11,7 @@ scheduler = AsyncIOScheduler()
 async def start_scheduler(bot: Bot):
     try:
         await check_changes_job(bot)
-        update_cache_duration()
+        await update_cache_duration()
         scheduler.add_job(update_cache_duration, CronTrigger(minute=00, second=00))
         scheduler.add_job(check_changes_job, 'interval', minutes=3, args=[bot])
         scheduler.add_job(send_new_timetable, CronTrigger(day_of_week="sun", hour=14, minute=00), args=[bot])

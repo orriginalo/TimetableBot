@@ -3,20 +3,20 @@ from typing import Annotated
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, text
 
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, BIGINT
 
 from bot.database.setup import Base
 
 import variables as var
 
-intpk = Annotated[int, mapped_column(primary_key=True)]
+intpk = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
 created_at = Annotated[str, mapped_column(server_default=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"))]
 updated_at = Annotated[str, mapped_column(server_default=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"), onupdate=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"))]
 
 class User(Base):
   __tablename__ = "users"
   uid: Mapped[intpk]
-  tg_id: Mapped[int] = mapped_column(unique=True)
+  tg_id: Mapped[int] = mapped_column(BIGINT, unique=True)
   role: Mapped[int]
   username: Mapped[str | None]
   firstname: Mapped[str | None]

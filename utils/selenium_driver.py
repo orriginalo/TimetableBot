@@ -179,12 +179,6 @@ class AsyncDriverPool:
 # Глобальная переменная для пула
 driver_pool: AsyncDriverPool = None
 
-async def init_driver_pool():
-    global driver_pool
-    driver_pool = AsyncDriverPool(pool_size=5, headless=True, remote=False, login=os.getenv("LOGIN"), password=os.getenv("PASSWORD"))
-    await driver_pool.init_pool()
-
-
 async def handle_request(group_name: str, next_week: bool):
     driver = await driver_pool.acquire()
     try:
@@ -201,7 +195,7 @@ driver_pool = None
 # Инициализация пула при импорте модуля
 async def _init_driver_pool():
     global driver_pool
-    driver_pool = AsyncDriverPool(pool_size=5, headless=True, remote=False)
+    driver_pool = AsyncDriverPool(pool_size=3, headless=True, remote=False)
     await driver_pool.init_pool()
 
 # Автоматическая инициализация пула
