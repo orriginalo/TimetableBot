@@ -42,7 +42,8 @@ def write_pdf_to_file(path_to_file: str, content: bytes):
 
 async def pdf_to_png(pdf_path: str, output_folder: str, date: str):
     # Конвертируем PDF в список изображений (по одной картинке на страницу)
-    images = await asyncio.to_thread(convert_from_path, pdf_path, dpi=300, poppler_path="C:\\poppler\\poppler-24.08.0\\Library\\bin")
+    # images = await asyncio.to_thread(convert_from_path, pdf_path, dpi=300, poppler_path="C:\\poppler\\poppler-24.08.0\\Library\\bin")
+    images = await asyncio.to_thread(convert_from_path, pdf_path, dpi=300)
 
     # Сохраняем каждую страницу как PNG
     for i, img in enumerate(images):
