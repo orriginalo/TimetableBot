@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import variables as var
 
-load_dotenv()
+load_dotenv(override=True)
 
 class AsyncDriver:
     def __init__(self, headless=True, remote=False):
@@ -195,7 +195,14 @@ driver_pool = None
 # Инициализация пула при импорте модуля
 async def _init_driver_pool():
     global driver_pool
-    driver_pool = AsyncDriverPool(pool_size=3, headless=True, remote=False)
+    pool_size = 3
+    try:
+        pool_size = int(os.getenv("DRIVER_POOL_SIZE"))
+    except ValueError:
+        logger.warning("DRIVER_POOL_SIZE is not an integer, defaulting to 3")
+    except Exception as e:
+        logger.error(f"Error parsing DRIVER_POOL_SIZE from .env: {e}")
+    driver_pool = AsyncDriverPool(pool_size=pool_size, headless=True, remote=False)
     await driver_pool.init_pool()
 
 # Автоматическая инициализация пула

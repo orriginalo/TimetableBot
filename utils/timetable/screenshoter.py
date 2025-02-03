@@ -12,7 +12,7 @@ from PIL import Image
 import variables as var
 import bot.keyboards as kb
 
-from utils.selenium_driver import driver_pool, AsyncDriver, AsyncDriverPool
+from utils.selenium_driver import driver_pool, AsyncDriver
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -25,13 +25,14 @@ def clear_all_rows(driver: AsyncDriver):
     
     target_day = datetime.now().weekday()
     
-    for row in rows:
+    for i, row in enumerate(rows):
+        if i == 0:
+            continue
         try:
             header = row.find_element(By.XPATH, ".//div[contains(@class, 'table-header-col')]")
             lessons = row.find_elements(By.XPATH, ".//div[contains(@class, 'table-col')]")
-            header_text = header.text.split()[0].strip().lower()
-            
-            if header_text == var.weekdays[target_day]:
+            print(f"{i-1=} : {target_day=}")
+            if i-1 == target_day:
                 # Очищаем классы уроков в текущем ряду
                 for lesson in lessons:
                     driver.execute_script(
@@ -60,7 +61,6 @@ def clear_all_rows(driver: AsyncDriver):
             continue
 
 def keep_only_day(driver, target_day):
-    target_day = target_day.strip().lower()
     rows = WebDriverWait(driver, 10).until(
         EC.presence_of_all_elements_located((By.CLASS_NAME, "row"))
     )
@@ -68,26 +68,22 @@ def keep_only_day(driver, target_day):
     has_lessons = False
     
     print(f"{rows=}")
-    for row in rows:
+    for i, row in enumerate(rows):
+        if i == 0:
+            continue
         try:
-            header = row.find_element(By.XPATH, ".//div[contains(@class, 'table-header-col')]")
-            header_text = header.text.split()[0].strip().lower()
             
-            print(f"{header=}")
-            print(f"{header_text=}")
-            if header_text == target_day or header_text == "пара":
+            if i-1 == target_day:
                 # Проверяем наличие пар
                 lessons = row.find_elements(By.XPATH, ".//div[contains(@class, 'table-col')]")
-                print(f"{len(lessons)=}")
                 for lesson in lessons:
-                    lesson.text
                     content = lesson.find_element(By.XPATH, "./div[2]").text.strip()
                     if content != "-":
                         has_lessons = True
                         break
                 
                 # Если есть хотя бы одна пара - оставляем строку
-                if has_lessons or header_text == "пара":
+                if has_lessons:
                     continue
                 else:
                     driver.execute_script("arguments[0].remove();", row)
@@ -195,6 +191,7 @@ async def screenshot_timetable_next_week(message: Message, group_name: str):
             logger.warning(f"Следующая неделя для группы {group_name} не найдена.")
             return None
 
+        clear_all_rows(driver)
         driver.save_screenshot(screenshot_path)
 
         rect = parent_container.rect
@@ -232,7 +229,6 @@ async def screenshot_timetable_tomorrow(message: Message, group_name: str):
     target_date = tomorrow_date.strftime("%d %B").lower()
     
     screenshot_path = f"./data/screenshots/tomorrow_{group_name.lower()}_{tomorrow_str}.png"
-    # os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
 
     if os.path.exists(screenshot_path):
         last_modified_time = datetime.fromtimestamp(os.path.getmtime(screenshot_path))
@@ -260,23 +256,20 @@ async def screenshot_timetable_tomorrow(message: Message, group_name: str):
                 await status_message.edit_text("📭 <b>Завтра нет пар.</b>", parse_mode="html")
                 return None
 
-            # Прокрутка и скриншот
             driver.execute_script("arguments[0].scrollIntoView({behavior: 'auto', block: 'center'});", parent_container)
             time.sleep(0.5)
             
             
-            tomorrow_weekday = (datetime.today()+timedelta(days=1)).weekday()
-            target_day = var.weekdays[tomorrow_weekday]
+            target_day = (datetime.today()+timedelta(days=1)).weekday()
             
             has_lessons = keep_only_day(driver, target_day)
             if not has_lessons:
                 await status_message.edit_text("📭 <b>Завтра нет пар.</b>", parse_mode="html")
                 return None
             
-            # Сохранение и обрезка скриншота
+            clear_all_rows(driver)
             driver.save_screenshot(screenshot_path)
             
-            # Обрезка изображения
             rect = parent_container.rect
             crop_box = (
                 max(0, int(rect['x']) - var.MARGIN),
@@ -344,8 +337,7 @@ async def screenshot_timetable_today(message: Message, group_name: str):
             driver.execute_script("arguments[0].scrollIntoView({behavior: 'auto', block: 'center'});", parent_container)
             time.sleep(0.5)
             
-            tomorrow_weekday = datetime.today().weekday()
-            target_day = var.weekdays[tomorrow_weekday]
+            target_day = datetime.today().weekday()
             
             clear_all_rows(driver)
             has_lessons = keep_only_day(driver, target_day)

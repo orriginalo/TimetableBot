@@ -1,0 +1,22 @@
+# Your Telegram bot token
+BOT_TOKEN=
+
+# DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO)
+LOG_LEVEL=
+
+# Your login and password
+LOGIN=
+PASSWORD=
+
+# PostgreSQL database connection settings
+POSTGRES_HOST=localhost
+POSTGRES_PORT=
+POSTGRES_USER=
+POSTGRES_DB=
+POSTGRES_PASSWORD=
+
+SQLALCHEMY_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+SQLALCHEMY_URL_SYNC=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+
+# Driver pool size (default: 3)
+DRIVER_POOL_SIZE=1
