@@ -83,7 +83,7 @@ class AsyncDriver:
         
         try:
             timetable_container = await asyncio.to_thread(
-                lambda: WebDriverWait(self.driver, 10).until(
+                lambda: WebDriverWait(self.driver, 5).until(
                     EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'table-responsive')]/.."))
                 )
             )
