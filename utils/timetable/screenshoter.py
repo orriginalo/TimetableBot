@@ -31,7 +31,6 @@ def clear_all_rows(driver: AsyncDriver):
         try:
             header = row.find_element(By.XPATH, ".//div[contains(@class, 'table-header-col')]")
             lessons = row.find_elements(By.XPATH, ".//div[contains(@class, 'table-col')]")
-            print(f"{i-1=} : {target_day=}")
             if i-1 == target_day:
                 # Очищаем классы уроков в текущем ряду
                 for lesson in lessons:
@@ -45,8 +44,9 @@ def clear_all_rows(driver: AsyncDriver):
                     "arguments[0].className = 'table-header-col';",
                     header
                 )
-                
-                # Очищаем содержимое заголовка только в текущем ряду
+                driver._wait.until(
+                    EC.text_to_be_present_in_element_attribute((By.XPATH, f"(//div[@class='table-responsive']//div[@class='row'][3]//div[@class='table-col'])[last()]"), "class", "table-col")
+                )
             driver.execute_script(
                 """
                 const headerDiv = arguments[0].querySelector('div');
@@ -59,7 +59,9 @@ def clear_all_rows(driver: AsyncDriver):
         except Exception as e:
             print(f"Ошибка обработки ряда: {str(e)}")
             continue
-
+        
+# /html/body/div/div/div/div[2]/div/div[3]/div/div[2]/div/div[2]/div[9]
+# /html/body/div/div/div/div[2]/div/div[3]/div/div[2]/div/div[3]/div[9]
 def keep_only_day(driver, target_day):
     rows = WebDriverWait(driver, 10).until(
         EC.presence_of_all_elements_located((By.CLASS_NAME, "row"))
@@ -67,7 +69,6 @@ def keep_only_day(driver, target_day):
     
     has_lessons = False
     
-    print(f"{rows=}")
     for i, row in enumerate(rows):
         if i == 0:
             continue

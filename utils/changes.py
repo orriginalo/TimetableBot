@@ -22,12 +22,16 @@ async def check_changes_job(bot: Bot):
     await download_pdf_from_url(pdf_url)
     filename = await check_if_exists_changes_pdf_to_tomorrow()
     last_send_date = await get_setting("last_send_changes_date")
+    latest_changes_date = await get_setting("last_changes_date")
+    current_changes_date = get_last_png_changes()["latest_date"]
     if filename is not None:
-        if last_send_date is None or last_send_date != datetime.today().strftime("%d.%m.%y"):
+        if (last_send_date is None and latest_changes_date is None) or (last_send_date != datetime.today().strftime("%d.%m.%y") and current_changes_date != latest_changes_date):
             last_send_date = datetime.today().strftime("%d.%m.%y")
             logger.info(f"Changes for tomorrow found: {filename}")
+            latest_changes_date = get_last_png_changes()["latest_date"]
             await set_setting("last_send_changes_date", last_send_date)
-            await send_changes_to_users(bot, await get_changes_date(filename))
+            await set_setting("last_changes_date", latest_changes_date)
+            await send_changes_to_users(bot, latest_changes_date)
         else:
             date = get_last_png_changes()["latest_date"]
             await pdf_to_png(f"./data/changes/changes_{date}.pdf", f"./data/changes/", date)
