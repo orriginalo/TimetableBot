@@ -101,12 +101,8 @@ class AsyncDriver:
 
 
     async def select_timetable(self, group_name: str, next_week: bool = False):
-        import time
-        perfcounter = time.time()  # Время начала выполнения функции
 
         await asyncio.to_thread(self.driver.get, f"https://time.ulstu.ru/timetable?filter={group_name.lower()}")
-        logger.debug(f"1. Загружена страница. Время выполнения: {time.time() - perfcounter:.4f} сек.")
-        perfcounter = time.time()
 
         try:
             timetable_container = await asyncio.to_thread(
@@ -118,8 +114,6 @@ class AsyncDriver:
         except TimeoutException:
             logger.error(f"Контейнер с расписанием не найден для группы {group_name} за 10 секунд.")
             return None
-        logger.debug(f"2. Найден контейнер с расписанием. Время выполнения: {time.time() - perfcounter:.4f} сек.")
-        perfcounter = time.time()
 
         week_element = None
         try:
@@ -130,8 +124,6 @@ class AsyncDriver:
             )
         except TimeoutException:
             logger.debug("Элемент 'week-num' не найден, ищем в 'week'.")
-        logger.debug(f"3. Поиск элемента 'week-num'. Время выполнения: {time.time() - perfcounter:.4f} сек.")
-        perfcounter = time.time()
 
         week_text = ""
         if week_element:
@@ -147,8 +139,6 @@ class AsyncDriver:
             except TimeoutException:
                 logger.error(f"Не найден элемент с номером недели для группы {group_name}.")
                 return None
-        logger.debug(f"4. Извлечение текста недели. Время выполнения: {time.time() - perfcounter:.4f} сек.")
-        perfcounter = time.time()
 
         week_text = re.sub(r"Сейчас\s+", "", week_text).strip()
         logger.debug(f"Найден текст недели: '{week_text}'")
@@ -159,8 +149,6 @@ class AsyncDriver:
             return None
         displayed_week = int(match.group(1))
         logger.debug(f"Обнаружен номер недели: {displayed_week}")
-        logger.debug(f"5. Номер недели извлечен. Время выполнения: {time.time() - perfcounter:.4f} сек.")
-        perfcounter = time.time()
 
         current_week = var.calculate_current_study_number_week()
         expected_week = current_week + (1 if next_week else 0)
@@ -168,7 +156,6 @@ class AsyncDriver:
             logger.error(f"Ожидалась неделя {expected_week}, а отображается неделя {displayed_week} для группы {group_name}.")
             return None
         logger.debug(f"Номер недели {displayed_week} соответствует ожидаемому.")
-        logger.debug(f"6. Сравнение недель завершено. Время выполнения: {time.time() - perfcounter:.4f} сек.")
 
         return timetable_container
 
