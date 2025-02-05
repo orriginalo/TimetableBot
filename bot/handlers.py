@@ -17,6 +17,9 @@ class SetGroup(StatesGroup):
 class SeeOtherTimetable(StatesGroup):
   group_name = State()
 
+class ShowChanges(StatesGroup):
+  changes_data = State()
+
 router = Router()
 
 @router.message(CommandStart())
@@ -59,8 +62,10 @@ async def _(msg: Message):
   await screenshot_timetable_today(msg, group["name"])
 
 @router.message(F.text == "📋 Изменения")
-async def _(msg: Message):
-  await instantly_send_changes(msg, await get_user_by_id(msg.from_user.id), with_ask=True)
+async def _(msg: Message, state: FSMContext):
+  await state.set_state(ShowChanges.changes_data)
+  await instantly_send_changes(msg, state, await get_user_by_id(msg.from_user.id), with_ask=True)
+
 
 @router.message(F.text == "Сменить группу 🔄️")
 async def _(msg: Message, state: FSMContext):
@@ -115,12 +120,23 @@ async def settings_handler(call: CallbackQuery):
   updated_kb = await kb.get_settings_keyboard(user)
   await call.message.edit_reply_markup(reply_markup=updated_kb)
 
-@router.callback_query(F.data.contains("_changes"))
-async def _(call: CallbackQuery):
+@router.callback_query(F.data.contains("_changes"), ShowChanges.changes_data)
+async def _(call: CallbackQuery, state: FSMContext):
   condition = call.data.split("_")[0]
   match condition:
     case "show":
-      await instantly_send_changes(call.message, await get_user_by_id(call.from_user.id), with_ask=False)
+      await call.message.delete()
+      data = await state.get_data()
+      changes_data = data["changes_data"]
+      caption = changes_data["caption"]
+      media = changes_data["media"]
+      if len(media) == 1:
+        await call.message.bot.send_photo(call.from_user.id, media[0], caption=caption, parse_mode="html")
+      elif len(media) > 1:
+        media[0].caption = caption
+        media[0].parse_mode = "html"
+        await call.message.bot.send_media_group(call.from_user.id, media=media)
     case "dont-show":
       await call.message.delete()
+  await state.clear()
       

@@ -60,8 +60,6 @@ def clear_all_rows(driver: AsyncDriver):
             print(f"Ошибка обработки ряда: {str(e)}")
             continue
         
-# /html/body/div/div/div/div[2]/div/div[3]/div/div[2]/div/div[2]/div[9]
-# /html/body/div/div/div/div[2]/div/div[3]/div/div[2]/div/div[3]/div[9]
 def keep_only_day(driver, target_day):
     rows = WebDriverWait(driver, 10).until(
         EC.presence_of_all_elements_located((By.CLASS_NAME, "row"))
@@ -134,18 +132,8 @@ async def screenshot_timetable(message: Message, group_name: str, other_group: b
                 return None
         
         clear_all_rows(driver)
-        driver.save_screenshot(screenshot_path)
+        parent_container.screenshot(screenshot_path)
 
-        rect = parent_container.rect
-        crop_box = (
-            max(0, int(rect['x']) - var.MARGIN),
-            max(0, int(rect['y']) - var.MARGIN),
-            int(rect['x'] + rect['width'] + var.MARGIN),
-            int(rect['y'] + rect['height'] + var.MARGIN)
-        )
-        image = Image.open(screenshot_path)
-        cropped_image = image.crop(crop_box)
-        cropped_image.save(screenshot_path)
         logger.debug(f"Screenshot saved: {screenshot_path}")
 
         try:
@@ -193,18 +181,8 @@ async def screenshot_timetable_next_week(message: Message, group_name: str):
             return None
 
         clear_all_rows(driver)
-        driver.save_screenshot(screenshot_path)
+        parent_container.screenshot(screenshot_path)
 
-        rect = parent_container.rect
-        crop_box = (
-            max(0, int(rect['x']) - var.MARGIN),
-            max(0, int(rect['y']) - var.MARGIN),
-            int(rect['x'] + rect['width'] + var.MARGIN),
-            int(rect['y'] + rect['height'] + var.MARGIN)
-        )
-        image = Image.open(screenshot_path)
-        cropped_image = image.crop(crop_box)
-        cropped_image.save(screenshot_path)
         logger.debug(f"Screenshot saved: {screenshot_path}")
 
         try:
@@ -269,19 +247,7 @@ async def screenshot_timetable_tomorrow(message: Message, group_name: str):
                 return None
             
             clear_all_rows(driver)
-            driver.save_screenshot(screenshot_path)
-            
-            rect = parent_container.rect
-            crop_box = (
-                max(0, int(rect['x']) - var.MARGIN),
-                max(0, int(rect['y']) - var.MARGIN),
-                int(rect['x'] + rect['width'] + var.MARGIN),
-                int(rect['y'] + rect['height'] + var.MARGIN)
-            )
-            
-            with Image.open(screenshot_path) as img:
-                cropped = img.crop(crop_box)
-                cropped.save(screenshot_path)
+            parent_container.screenshot(screenshot_path)
 
             # Отправка результата
             await message.answer_photo(
@@ -348,20 +314,7 @@ async def screenshot_timetable_today(message: Message, group_name: str):
                 return None
             
             # Сохранение и обрезка скриншота
-            driver.save_screenshot(screenshot_path)
-            
-            # Обрезка изображения
-            rect = parent_container.rect
-            crop_box = (
-                max(0, int(rect['x']) - var.MARGIN),
-                max(0, int(rect['y']) - var.MARGIN),
-                int(rect['x'] + rect['width'] + var.MARGIN),
-                int(rect['y'] + rect['height'] + var.MARGIN)
-            )
-            
-            with Image.open(screenshot_path) as img:
-                cropped = img.crop(crop_box)
-                cropped.save(screenshot_path)
+            parent_container.screenshot(screenshot_path)
 
             # Отправка результата
             await message.answer_photo(

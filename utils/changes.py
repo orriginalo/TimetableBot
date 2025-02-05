@@ -15,6 +15,7 @@ from pdf2image import convert_from_path
 from rich import print
 from bs4 import BeautifulSoup
 import bot.keyboards as kb
+from aiogram.fsm.context import FSMContext
 
 async def check_changes_job(bot: Bot):
     global already_sended
@@ -171,7 +172,7 @@ def get_last_png_changes():
     
 
 
-async def instantly_send_changes(msg: Message, user: dict, with_ask: bool = True):
+async def instantly_send_changes(msg: Message, state: FSMContext, user: dict, with_ask: bool = True):
     if with_ask:
         msg = await msg.bot.send_message(user["tg_id"], "⏳ Получаю изменения...", parse_mode="html")
     
@@ -188,7 +189,16 @@ async def instantly_send_changes(msg: Message, user: dict, with_ask: bool = True
     if with_ask:
         await msg.edit_text("⏳ Проверяю...")
     is_group_in_changes = await check_if_group_in_changes(user["group_name"], changes_date)
-  
+    
+    
+    text = ""
+    if not is_group_in_changes:
+        text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user['group_name'].capitalize()}</code> <b>нет</b> в списке изменений."
+    else:
+        text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user['group_name'].capitalize()}</code> <b>есть</b> в списке изменений!"
+        
+    await state.update_data(changes_data={"is_group_in_changes": is_group_in_changes, "changes_date": changes_date, "media": media, "caption": text})
+        
     if not is_group_in_changes:
         if with_ask:
             await msg.delete()
@@ -199,7 +209,6 @@ async def instantly_send_changes(msg: Message, user: dict, with_ask: bool = True
                                 reply_markup=kb.ask_changes_keyboard)
         else:
             await msg.delete()
-            text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user['group_name'].capitalize()}</code> <b>нет</b> в списке изменений."
             if len(media) == 1:
                 await msg.bot.send_photo(user["tg_id"], photo=media[0], caption=text, parse_mode="html")
             elif len(media) > 1:
@@ -209,7 +218,6 @@ async def instantly_send_changes(msg: Message, user: dict, with_ask: bool = True
     else:
         if with_ask:
             await msg.edit_text("⏳ Отправляю...")
-        text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user['group_name'].capitalize()}</code> <b>есть</b> в списке изменений!"
         if len(media) == 1:
             await msg.bot.send_photo(user["tg_id"], photo=media[0], caption=text, parse_mode="html")
         elif len(media) > 1:
