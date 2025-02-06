@@ -36,6 +36,7 @@ class AsyncDriver:
         
         self._wait = WebDriverWait(self._driver, 10)
         self.authed = False
+        self.n = n
     
     @property
     def driver(self):
