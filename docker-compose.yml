@@ -15,6 +15,7 @@ services:
     restart: no
     networks:
       - internal
+      - ulstu-bots-network
 
   db:
     image: postgres:latest
@@ -35,3 +36,5 @@ services:
 networks:
   internal:
     driver: bridge
+  ulstu-bots-network:
+    external: true

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from utils.log import logger
 from bot.handlers import router
-from bot.database.core import create_tables
+# from bot.database.core import create_tables
 from bot.scheduler import start_scheduler
 from bot.middlewares import CheckState, MsgLoggerMiddleware
 
@@ -45,8 +45,8 @@ async def main():
   # await driver.auth(login, password)
   # logger.info("Driver authenticated")
   
-  await create_tables(drop_tables=False, populate_groups=False)
-  logger.info("Database tables created")
+  # await create_tables(drop_tables=False, populate_groups=False)
+  # logger.info("Database tables created")
   
   await start_scheduler(bot)
   logger.info("Scheduler started")
