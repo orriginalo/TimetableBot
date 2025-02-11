@@ -10,7 +10,7 @@ from bot.database.queries.group import get_all_groups, get_group_by_name
 import bot.keyboards as kb
 from utils.changes import instantly_send_changes
 from utils.timetable.screenshoter import *
-from bot.requests.screenshots import fetch_screenshot_path
+from bot.requests.screenshots import fetch_screenshot_path_and_send
 
 class SetGroup(StatesGroup):
   group_name = State()
@@ -41,24 +41,24 @@ async def _(msg: Message, state: FSMContext):
 @router.message(F.text == "⏭️ След. неделя")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
-  await fetch_screenshot_path(user["group_name"], "nextweek", msg)
+  await fetch_screenshot_path_and_send(user["group_name"], "nextweek", msg)
 
 @router.message(F.text == "Текущая неделя ⬅️")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
-  await fetch_screenshot_path(user["group_name"], "full", msg)
+  await fetch_screenshot_path_and_send(user["group_name"], "full", msg)
   # await screenshot_timetable_next_week(msg, group["name"])
 
 @router.message(F.text == "⏭️ Завтра")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
-  await fetch_screenshot_path(user["group_name"], "tomorrow", msg)
+  await fetch_screenshot_path_and_send(user["group_name"], "tomorrow", msg)
   # await screenshot_timetable_tomorrow(msg, group["name"])
 
 @router.message(F.text == "Сегодня ⬅️")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
-  await fetch_screenshot_path(user["group_name"], "today", msg)
+  await fetch_screenshot_path_and_send(user["group_name"], "today", msg)
 
 @router.message(F.text == "📋 Изменения")
 async def _(msg: Message, state: FSMContext):
