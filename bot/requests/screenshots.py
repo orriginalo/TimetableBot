@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import aiohttp
 import asyncio
 import os
@@ -30,7 +31,18 @@ async def fetch_screenshot_path(group_name: str, period: str, msg: Message):
                 return
               return
             if decoded_line.startswith("end:"):
-              await msg.answer_photo(FSInputFile(decoded_line[5:].strip()))
+              caption: str = None
+              week_num = (decoded_line[5:].split("|"))[1]
+              if period in ["full", "nextweek"]:
+                caption = f"<code>{group_name.capitalize()}</code>. <b>{week_num}</b> неделя"
+              elif period == "today":
+                today = datetime.now().strftime("%d.%m.%y")
+                caption = f"🗓️ Расписание на сегодня <i>({today})</i>"
+              elif period == "tomorrow":
+                tomorrow = (datetime.now() + timedelta(days=1)).strftime("%d.%m.%y")
+                caption = f"🗓️ Расписание на завтра <i>({tomorrow})</i>"
+              
+              await msg.answer_photo(FSInputFile(decoded_line[5:-(len(decoded_line.split("|")[1])+1)].strip()), caption=caption if caption else "", parse_mode="html")
               await sent_message.delete()
               return
             if decoded_line.startswith("data:"):

@@ -23,7 +23,7 @@ def setup_logger():
   log_filename = os.path.join(log_dir, f"{datetime.datetime.now().strftime('%Y-%m-%d')}.log")
 
   # Создаём главный логгер
-  logger = logging.getLogger("DomashkaBot")
+  logger = logging.getLogger("TimetableBot")
   logger.setLevel(log_level)
 
   # Проверяем, чтобы обработчики не дублировались

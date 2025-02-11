@@ -6,7 +6,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./data:/app/data
+      - C:\Scripts\Python\BotsAPI\data:/app/data
     env_file:
       - .env
     environment:
@@ -14,9 +14,9 @@ services:
       - PYTHONUNBUFFERED=1
     restart: no
     networks:
-      - internal
       - ulstu-bots-network
-
+      - internal
+    
   db:
     image: postgres:latest
     restart: always
