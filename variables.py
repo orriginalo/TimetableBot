@@ -5,6 +5,7 @@ default_user_settings: dict = {
   "send_timetable_new_week": True,
   "send_timetable_updated": False,
   "send_changes_updated": True,
+  "send_changes_when_isnt_group": True
 }
 
 CURRENT_WEEK_CORRECTION: int = -2

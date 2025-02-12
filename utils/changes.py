@@ -114,13 +114,16 @@ async def send_changes_to_users(bot: Bot, date: str):
     for path in files_paths:
         files.append(FSInputFile(f"{path}"))
   
-
+# User.settings['send_changes_when_isnt_group'].as_boolean() == True
     for user in users_with_setting:
         group = await get_group_by_name(user["group_name"])
+        is_group_in_changes = await check_if_group_in_changes(group["name"], date)
+        if not is_group_in_changes and user["settings"]["send_changes_when_isnt_group"] == False:
+            return
         text = (
             f"🔔 Появились изменения на <b>{date}</b>.\n"
             f"<code>{user['group_name'].capitalize()}</code> <b>есть</b> в списке изменений!"
-        ) if await check_if_group_in_changes(group["name"], date) else (
+        ) if is_group_in_changes else (
             f"🔔 Появились изменения на <b>{date}</b>.\n"
             f"<code>{user['group_name'].capitalize()}</code> <b>нет</b> в списке изменений."
         )

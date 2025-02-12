@@ -121,15 +121,10 @@ async def settings_handler(call: CallbackQuery):
   user = await get_user_by_id(call.from_user.id)
   user_settings = user["settings"]
   user_settings_copy = user_settings.copy()
-  match (setting_name):
-    case "send_timetable_new_week":
-      user_settings_copy["send_timetable_new_week"] = not setting_condition
-    case "send_timetable_updated":
-      user_settings_copy["send_timetable_updated"] = not setting_condition
-    case "send_changes_updated":
-      user_settings_copy["send_changes_updated"] = not setting_condition
-    case _:
-      pass
+  try:
+    user_settings_copy[setting_name] = not setting_condition
+  except KeyError:
+    print(f"Setting '{setting_name}' not found")
   user = await update_user(call.from_user.id, settings=user_settings_copy)
   updated_kb = await kb.get_settings_keyboard(user)
   await call.message.edit_reply_markup(reply_markup=updated_kb)

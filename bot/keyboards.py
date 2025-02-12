@@ -28,40 +28,30 @@ other_group_when = InlineKeyboardMarkup(
 )
 
 async def get_settings_keyboard(user: dict):
-  
   def get_emoji_by_bool(var: bool):
-    return "✅" if var == True else "❌"
-  
+    return "✅" if var else "❌"
+
   def get_callback_by_bool(var: bool):
-    return "enable_" if var == True else "disable_"
-  
-  user_settings = user["settings"]
-  
-  send_timetable_new_week = user_settings["send_timetable_new_week"]
-  send_timetable_updated = user_settings["send_timetable_updated"]
-  send_changes_updated = user_settings["send_changes_updated"]
-  
+    return "enable_" if var else "disable_"
+
   settings_postfix = "_setting"
-  
-  buttons = {
-    "send_timetable_new_week": {
-      "text": f"{get_emoji_by_bool(send_timetable_new_week)} Расписание с новой недели",
-      "callback": f"{get_callback_by_bool(send_timetable_new_week)}send_timetable_new_week{settings_postfix}"
-    },
-    # "send_timetable_updated": {
-    #   "text": f"{get_emoji_by_bool(send_timetable_updated)} Обновление в расписании",
-    #   "callback": f"{get_callback_by_bool(send_timetable_updated)}send_timetable_updated{settings_postfix}"
-    # },
-    "send_changes_updated": {
-      "text": f"{get_emoji_by_bool(send_changes_updated)} Новые изменения",
-      "callback": f"{get_callback_by_bool(send_changes_updated)}send_changes_updated{settings_postfix}"
-    }
-  }
-  
+
+  settings = [
+    {"key": "send_timetable_new_week", "label": "Расписание с новой недели"},
+    {"key": "send_changes_updated", "label": "Новые изменения"},
+    {"key": "send_changes_when_isnt_group", "label": "Изменения когда группы нет"}
+  ]
+
   kb = InlineKeyboardBuilder()
-  
-  for key, value in buttons.items():
-    kb.add(InlineKeyboardButton(text=value["text"], callback_data=value["callback"]))
-  
+
+  for setting in settings:
+    key = setting["key"]
+    label = setting["label"]
+    value = user["settings"].get(key, False)  # По умолчанию False, если нет ключа
+    kb.add(InlineKeyboardButton(
+      text=f"{get_emoji_by_bool(value)} {label}",
+      callback_data=f"{get_callback_by_bool(value)}{key}{settings_postfix}"
+    ))
+
   kb.add(InlineKeyboardButton(text="◀️ Назад", callback_data="back"))
   return kb.adjust(1).as_markup()
