@@ -99,8 +99,10 @@ async def _(call: CallbackQuery, state: FSMContext):
   match condition:
     case "next-week":
       await fetch_screenshot_path_and_send(group_name, "nextweek", call.message)
+      await state.clear()
     case "current-week":
       await fetch_screenshot_path_and_send(group_name, "full", call.message)
+      await state.clear()
     case _:
       await call.answer("🚫 Что-то пошло не так. Попробуй еще раз.")
 
