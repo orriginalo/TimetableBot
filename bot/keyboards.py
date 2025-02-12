@@ -21,6 +21,11 @@ ask_changes_keyboard = InlineKeyboardMarkup(
   ],
 )
 
+other_group_when = InlineKeyboardMarkup(
+  inline_keyboard=[
+    [InlineKeyboardButton(text="⏭️ Следующая", callback_data="next-week_other_group"), InlineKeyboardButton(text="Текущая ⬅️", callback_data="current-week_other_group")],
+  ]
+)
 
 async def get_settings_keyboard(user: dict):
   

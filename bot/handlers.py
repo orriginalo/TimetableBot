@@ -86,10 +86,23 @@ async def _(call: CallbackQuery, state: FSMContext):
 async def _(msg: Message, state: FSMContext):
   group_name = msg.text.strip().lower()
   if await get_group_by_name(group_name):
-    # await screenshot_timetable(msg, group_name, other_group=True)
-    await state.clear()
+    await state.update_data(group_name=group_name)
+    await msg.answer("На какую неделю?", reply_markup=kb.other_group_when)
   else:
     await msg.answer("Группа не найдена. Попробуй еще раз.")
+  
+@router.callback_query(F.data.contains("_other_group"))
+async def _(call: CallbackQuery, state: FSMContext):
+  group_name = (await state.get_data())["group_name"]
+  condition = call.data.split("_")[0]
+  await call.message.delete()
+  match condition:
+    case "next-week":
+      await fetch_screenshot_path_and_send(group_name, "nextweek", call.message)
+    case "current-week":
+      await fetch_screenshot_path_and_send(group_name, "full", call.message)
+    case _:
+      await call.answer("🚫 Что-то пошло не так. Попробуй еще раз.")
 
 @router.message(Command("settings"))
 async def show_settings(message: Message, state: FSMContext):
