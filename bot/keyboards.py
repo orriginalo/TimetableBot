@@ -5,7 +5,7 @@ main_keyboard = ReplyKeyboardMarkup(
   keyboard=[
     [KeyboardButton(text="⏭️ След. неделя"), KeyboardButton(text="Текущая неделя ⬅️")],
     [KeyboardButton(text="⏭️ Завтра"), KeyboardButton(text="Сегодня ⬅️")],
-    [KeyboardButton(text="📋 Изменения"), KeyboardButton(text="Сменить группу 🔄️")],
+    [KeyboardButton(text="📋 Изменения"), KeyboardButton(text="Настройки 🔧")],
     [KeyboardButton(text="❔Расписание другой группы❔")],
   ],
   resize_keyboard=True,
@@ -27,6 +27,8 @@ other_group_when = InlineKeyboardMarkup(
   ]
 )
 
+empty_inline = InlineKeyboardMarkup(inline_keyboard=[])
+
 async def get_settings_keyboard(user: dict):
   def get_emoji_by_bool(var: bool):
     return "✅" if var else "❌"
@@ -44,6 +46,8 @@ async def get_settings_keyboard(user: dict):
 
   kb = InlineKeyboardBuilder()
 
+  kb.add(InlineKeyboardButton(text="🔄️ Сменить группу", callback_data="change-group"))
+
   for setting in settings:
     key = setting["key"]
     label = setting["label"]
@@ -53,5 +57,5 @@ async def get_settings_keyboard(user: dict):
       callback_data=f"{get_callback_by_bool(value)}{key}{settings_postfix}"
     ))
 
-  kb.add(InlineKeyboardButton(text="◀️ Назад", callback_data="back"))
+  kb.add(InlineKeyboardButton(text="« Назад", callback_data="back-settings"))
   return kb.adjust(1).as_markup()

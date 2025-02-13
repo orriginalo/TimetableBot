@@ -65,10 +65,10 @@ async def _(msg: Message, state: FSMContext):
   await state.set_state(ShowChanges.changes_data)
   await instantly_send_changes(msg, state, await get_user_by_id(msg.from_user.id), with_ask=True)
 
-
-@router.message(F.text == "Сменить группу 🔄️")
-async def _(msg: Message, state: FSMContext):
-  await msg.answer("Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
+@router.callback_query(F.data == "change-group")
+async def _(call: CallbackQuery, state: FSMContext):
+  if call:
+    await call.message.answer("Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
   await state.set_state(SetGroup.group_name)
 
 @router.message(F.text == "❔Расписание другой группы❔")
@@ -78,8 +78,14 @@ async def _(msg: Message, state: FSMContext):
 
 @router.callback_query(F.data == "back")
 async def _(call: CallbackQuery, state: FSMContext):
-  await call.message.delete()
-  await call.message.answer("❌ Действие отменено.", reply_markup=kb.main_keyboard)
+  await call.message.edit_reply_markup(reply_markup=kb.empty_inline)
+  await call.message.edit_text(text="❌ Действие отменено.")
+  await state.clear()
+  
+@router.callback_query(F.data == "back-settings")
+async def _(call: CallbackQuery, state: FSMContext):
+  await call.message.edit_text(text="✅ Настройки применены.")
+  await call.message.edit_reply_markup(reply_markup=kb.empty_inline)
   await state.clear()
 
 @router.message(SeeOtherTimetable.group_name)
@@ -106,6 +112,7 @@ async def _(call: CallbackQuery, state: FSMContext):
     case _:
       await call.answer("🚫 Что-то пошло не так. Попробуй еще раз.")
 
+@router.message(F.text.lower().contains("настройки"))
 @router.message(Command("settings"))
 async def show_settings(message: Message, state: FSMContext):
   await state.clear()
@@ -149,3 +156,9 @@ async def _(call: CallbackQuery, state: FSMContext):
       await call.message.delete()
   await state.clear()
       
+      
+@router.message()
+async def _(msg: Message):
+  group_name = msg.text.strip()
+  if await get_group_by_name(group_name):
+    await fetch_screenshot_path_and_send(group_name, "full", msg)
