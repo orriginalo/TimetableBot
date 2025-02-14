@@ -4,7 +4,6 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from aiogram.types import Message, FSInputFile
-# from utils.log import logger
 
 load_dotenv(override=True)
 

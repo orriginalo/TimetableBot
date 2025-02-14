@@ -65,10 +65,14 @@ async def _(msg: Message, state: FSMContext):
   await state.set_state(ShowChanges.changes_data)
   await instantly_send_changes(msg, state, await get_user_by_id(msg.from_user.id), with_ask=True)
 
+@router.message(F.text.lower().contains("сменить группу"))
+async def _(msg: Message, state: FSMContext):
+  await msg.answer("Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
+  await state.set_state(SetGroup.group_name)
+
 @router.callback_query(F.data == "change-group")
 async def _(call: CallbackQuery, state: FSMContext):
-  if call:
-    await call.message.answer("Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
+  await call.message.answer("Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
   await state.set_state(SetGroup.group_name)
 
 @router.message(F.text == "❔Расписание другой группы❔")
@@ -78,7 +82,10 @@ async def _(msg: Message, state: FSMContext):
 
 @router.callback_query(F.data == "back")
 async def _(call: CallbackQuery, state: FSMContext):
-  await call.message.edit_reply_markup(reply_markup=kb.empty_inline)
+  try:
+    await call.message.edit_reply_markup(reply_markup=kb.empty_inline)
+  except:
+    pass
   await call.message.edit_text(text="❌ Действие отменено.")
   await state.clear()
   

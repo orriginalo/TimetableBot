@@ -119,7 +119,7 @@ async def send_changes_to_users(bot: Bot, date: str):
         group = await get_group_by_name(user["group_name"])
         is_group_in_changes = await check_if_group_in_changes(group["name"], date)
         if not is_group_in_changes and user["settings"]["send_changes_when_isnt_group"] == False:
-            return
+            continue
         text = (
             f"🔔 Появились изменения на <b>{date}</b>.\n"
             f"<code>{user['group_name'].capitalize()}</code> <b>есть</b> в списке изменений!"
