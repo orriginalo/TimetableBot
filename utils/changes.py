@@ -116,24 +116,24 @@ async def send_changes_to_users(bot: Bot, date: str):
   
 # User.settings['send_changes_when_isnt_group'].as_boolean() == True
     for user in users_with_setting:
-        group = await get_group_by_name(user["group_name"])
-        is_group_in_changes = await check_if_group_in_changes(group["name"], date)
-        if not is_group_in_changes and user["settings"]["send_changes_when_isnt_group"] == False:
+        group = await get_group_by_name(user.group_name)
+        is_group_in_changes = await check_if_group_in_changes(group.name, date)
+        if not is_group_in_changes and user.settings["send_changes_when_isnt_group"] == False:
             continue
         text = (
             f"🔔 Появились изменения на <b>{date}</b>.\n"
-            f"<code>{user['group_name'].capitalize()}</code> <b>есть</b> в списке изменений!"
+            f"<code>{user.group_name.capitalize()}</code> <b>есть</b> в списке изменений!"
         ) if is_group_in_changes else (
             f"🔔 Появились изменения на <b>{date}</b>.\n"
-            f"<code>{user['group_name'].capitalize()}</code> <b>нет</b> в списке изменений."
+            f"<code>{user.group_name.capitalize()}</code> <b>нет</b> в списке изменений."
         )
 
         # Если только 1 фото → отправляем обычное `send_photo()`
         if len(files) == 1:
             try:
-                await bot.send_photo(user["tg_id"], photo=files[0], caption=text, parse_mode="html")
+                await bot.send_photo(user.tg_id, photo=files[0], caption=text, parse_mode="html")
             except Exception as e:
-                logger.error(f"Не удалось отправить изменения для {user['tg_id']}: {e}")
+                logger.error(f"Не удалось отправить изменения для {user.tg_id}: {e}")
                 
         elif len(files) > 1:
             try:
@@ -142,9 +142,9 @@ async def send_changes_to_users(bot: Bot, date: str):
                 media[0].caption = text  # Добавляем описание только к первой картинке
                 media[0].parse_mode = "html"
 
-                await bot.send_media_group(user["tg_id"], media=media)
+                await bot.send_media_group(user.tg_id, media=media)
             except Exception as e:
-                logger.error(f"Не удалось отправить изменения для {user["tg_id"]}: {e}")
+                logger.error(f"Не удалось отправить изменения для {user.tg_id}: {e}")
 async def changes_to_tomorrow_exists():
     tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d.%m.%y")
     path_to_file = f"./data/changes/changes_{tomorrow_date}.pdf"
@@ -188,7 +188,7 @@ def get_last_png_changes():
 
 async def instantly_send_changes(msg: Message, state: FSMContext, user: dict, with_ask: bool = True):
     if with_ask:
-        msg = await msg.bot.send_message(user["tg_id"], "⏳ Получаю изменения...", parse_mode="html")
+        msg = await msg.bot.send_message(user.tg_id, "⏳ Получаю изменения...", parse_mode="html")
     
     last_png_changes = get_last_png_changes()
     png_files = []
@@ -202,42 +202,42 @@ async def instantly_send_changes(msg: Message, state: FSMContext, user: dict, wi
     
     if with_ask:
         await msg.edit_text("⏳ Проверяю...")
-    is_group_in_changes = await check_if_group_in_changes(user["group_name"], changes_date)
+    is_group_in_changes = await check_if_group_in_changes(user.group_name, changes_date)
     
     
     text = ""
     if not is_group_in_changes:
-        text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user['group_name'].capitalize()}</code> <b>нет</b> в списке изменений."
+        text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user.group_name.capitalize()}</code> <b>нет</b> в списке изменений."
     else:
-        text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user['group_name'].capitalize()}</code> <b>есть</b> в списке изменений!"
+        text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user.group_name.capitalize()}</code> <b>есть</b> в списке изменений!"
         
     await state.update_data(changes_data={"is_group_in_changes": is_group_in_changes, "changes_date": changes_date, "media": media, "caption": text})
         
     if not is_group_in_changes:
         if with_ask:
             await msg.delete()
-            await msg.bot.send_message(user["tg_id"],
-                                f"<code>{user['group_name'].capitalize()}</code> <b>нет</b> в списке изменений. <i>({changes_date})</i>.\n"
+            await msg.bot.send_message(user.tg_id,
+                                f"<code>{user.group_name.capitalize()}</code> <b>нет</b> в списке изменений. <i>({changes_date})</i>.\n"
                                 f"Показать изменения?",
                                 parse_mode="html",
                                 reply_markup=kb.ask_changes_keyboard)
         else:
             await msg.delete()
             if len(media) == 1:
-                await msg.bot.send_photo(user["tg_id"], photo=media[0], caption=text, parse_mode="html")
+                await msg.bot.send_photo(user.tg_id, photo=media[0], caption=text, parse_mode="html")
             elif len(media) > 1:
                 media[0].caption = text
                 media[0].parse_mode = "html"
-                await msg.bot.send_media_group(user["tg_id"], media=media)
+                await msg.bot.send_media_group(user.tg_id, media=media)
     else:
         if with_ask:
             await msg.edit_text("⏳ Отправляю...")
         if len(media) == 1:
-            await msg.bot.send_photo(user["tg_id"], photo=media[0], caption=text, parse_mode="html")
+            await msg.bot.send_photo(user.tg_id, photo=media[0], caption=text, parse_mode="html")
         elif len(media) > 1:
             media[0].caption = text
             media[0].parse_mode = "html"
-            await msg.bot.send_media_group(user["tg_id"], media=media)
+            await msg.bot.send_media_group(user.tg_id, media=media)
         await msg.delete()
 
 async def check_if_group_in_changes(group_name: str, date: str):

@@ -10,8 +10,8 @@ from bot.database.setup import Base
 import variables as var
 
 intpk = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
-created_at = Annotated[str, mapped_column(server_default=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"))]
-updated_at = Annotated[str, mapped_column(server_default=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"), onupdate=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"))]
+created_at = Annotated[datetime, mapped_column(server_default=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"))]
+updated_at = Annotated[datetime, mapped_column(server_default=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"), onupdate=text("TIMEZONE('UTC-4', CURRENT_TIMESTAMP)"))]
 
 class User(Base):
   __tablename__ = "users"
@@ -26,6 +26,7 @@ class User(Base):
   updated_at: Mapped[updated_at]
   group_id: Mapped[int | None]
   group_name: Mapped[str | None]
+  recent_groups: Mapped[list[str]]
 
 class Groups(Base):
   __tablename__ = "groups"

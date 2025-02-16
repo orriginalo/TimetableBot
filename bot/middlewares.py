@@ -24,7 +24,7 @@ class CheckState(Filter):
 
     user = await get_user_by_id(message.from_user.id)
     if user:
-        if (user["group_name"] is None) and ((await state.get_state()) != "SetGroup:group_name") and (message.text != "/start"):
+        if (user.group_name is None) and ((await state.get_state()) != "SetGroup:group_name") and (message.text != "/start"):
             return False
         return True
     return True
@@ -49,7 +49,7 @@ class MsgLoggerMiddleware(BaseException):
                 group_id=None,
             )
         else:
-            if user["role"] == 0:
+            if user.role == 0:
                 return  # Прерываем выполнение, если роль 0
         
         # Обновляем данные пользователя в БД

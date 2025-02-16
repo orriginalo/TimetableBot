@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Literal
 import aiohttp
 import asyncio
 import os
@@ -7,7 +8,7 @@ from aiogram.types import Message, FSInputFile
 
 load_dotenv(override=True)
 
-async def fetch_screenshot_path_and_send(group_name: str, period: str, msg: Message):
+async def fetch_screenshot_path_and_send(group_name: str, period: Literal["full", "nextweek", "today", "tomorrow"], msg: Message):
   url = f"{os.getenv("API_URL")}/screenshots/{group_name}/{period}"  # Используем имя сервиса FastAPI
   sent_message = await msg.answer("👀 Проверяю расписание...", parse_mode="html")
   period_text = {

@@ -1,6 +1,8 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
+from bot.database.schemas import UserSchema
+
 main_keyboard = ReplyKeyboardMarkup(
   keyboard=[
     [KeyboardButton(text="⏭️ След. неделя"), KeyboardButton(text="Текущая неделя ⬅️")],
@@ -29,7 +31,7 @@ other_group_when = InlineKeyboardMarkup(
 
 empty_inline = InlineKeyboardMarkup(inline_keyboard=[])
 
-async def get_settings_keyboard(user: dict):
+async def get_settings_keyboard(user: UserSchema):
   def get_emoji_by_bool(var: bool):
     return "✅" if var else "❌"
 
@@ -51,7 +53,7 @@ async def get_settings_keyboard(user: dict):
   for setting in settings:
     key = setting["key"]
     label = setting["label"]
-    value = user["settings"].get(key, False)  # По умолчанию False, если нет ключа
+    value = user.settings.get(key, False)  # По умолчанию False, если нет ключа
     kb.add(InlineKeyboardButton(
       text=f"{get_emoji_by_bool(value)} {label}",
       callback_data=f"{get_callback_by_bool(value)}{key}{settings_postfix}"

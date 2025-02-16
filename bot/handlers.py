@@ -41,24 +41,22 @@ async def _(msg: Message, state: FSMContext):
 @router.message(F.text == "⏭️ След. неделя")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
-  await fetch_screenshot_path_and_send(user["group_name"], "nextweek", msg)
+  await fetch_screenshot_path_and_send(user.group_name, "nextweek", msg)
 
 @router.message(F.text == "Текущая неделя ⬅️")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
-  await fetch_screenshot_path_and_send(user["group_name"], "full", msg)
-  # await screenshot_timetable_next_week(msg, group["name"])
+  await fetch_screenshot_path_and_send(user.group_name, "full", msg)
 
 @router.message(F.text == "⏭️ Завтра")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
-  await fetch_screenshot_path_and_send(user["group_name"], "tomorrow", msg)
-  # await screenshot_timetable_tomorrow(msg, group["name"])
+  await fetch_screenshot_path_and_send(user.group_name, "tomorrow", msg)
 
 @router.message(F.text == "Сегодня ⬅️")
 async def _(msg: Message):
   user = await get_user_by_id(msg.from_user.id)
-  await fetch_screenshot_path_and_send(user["group_name"], "today", msg)
+  await fetch_screenshot_path_and_send(user.group_name, "today", msg)
 
 @router.message(F.text == "📋 Изменения")
 async def _(msg: Message, state: FSMContext):
@@ -106,7 +104,7 @@ async def _(msg: Message, state: FSMContext):
   
 @router.callback_query(F.data.contains("_other_group"))
 async def _(call: CallbackQuery, state: FSMContext):
-  group_name = (await state.get_data())["group_name"]
+  group_name = (await state.get_data()).group_name
   condition = call.data.split("_")[0]
   await call.message.delete()
   match condition:
@@ -133,7 +131,7 @@ async def settings_handler(call: CallbackQuery):
   setting_name = call.data.replace("_setting", "").replace("disable_", "").replace("enable_", "")
   setting_condition = False if call.data.split("_")[0] == "disable" else True
   user = await get_user_by_id(call.from_user.id)
-  user_settings = user["settings"]
+  user_settings = user.settings
   user_settings_copy = user_settings.copy()
   try:
     user_settings_copy[setting_name] = not setting_condition

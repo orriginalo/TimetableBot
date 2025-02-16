@@ -19,13 +19,13 @@ async def send_new_timetable(bot: Bot):
   users_with_notifications = await get_users(User.settings['send_timetable_new_week'].as_boolean() == True)
 
   for user in users_with_notifications:
-    group_name = user["group_name"]
+    group_name = user.group_name
     logger.debug(f"Started screenshotting timetable for group {group_name} (текущая неделя)...")
     screenshot_path = await get_screenshot_path(group_name, "nextweek")
 
     try:
         photo = FSInputFile(screenshot_path)
-        await bot.send_photo(user["tg_id"], photo=photo, caption=f"🔔 Расписание на следующую неделю", parse_mode="html")
+        await bot.send_photo(user.tg_id, photo=photo, caption=f"🔔 Расписание на следующую неделю", parse_mode="html")
     except Exception as e:
         logger.error(f"Ошибка при отправке скриншота: {e}")
 
