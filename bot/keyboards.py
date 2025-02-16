@@ -31,6 +31,15 @@ other_group_when = InlineKeyboardMarkup(
 
 empty_inline = InlineKeyboardMarkup(inline_keyboard=[])
 
+async def get_recent_groups_keyboard(user: UserSchema):
+  groups = user.recent_groups
+  kb = InlineKeyboardBuilder()
+  kb.add(InlineKeyboardButton(text="« Назад", callback_data="back"))
+  if groups and len(groups) > 0:
+    for group in groups:
+      kb.add(InlineKeyboardButton(text=group.capitalize(), callback_data=f"see-other-group_{group}"))
+  return kb.adjust(3).as_markup()
+
 async def get_settings_keyboard(user: UserSchema):
   def get_emoji_by_bool(var: bool):
     return "✅" if var else "❌"
@@ -49,6 +58,9 @@ async def get_settings_keyboard(user: UserSchema):
   kb = InlineKeyboardBuilder()
 
   kb.add(InlineKeyboardButton(text="🔄️ Сменить группу", callback_data="change-group"))
+
+  if user.recent_groups:
+    kb.add(InlineKeyboardButton(text="🔄 Сбросить последние группы.", callback_data="clear-recent-groups"))
 
   for setting in settings:
     key = setting["key"]

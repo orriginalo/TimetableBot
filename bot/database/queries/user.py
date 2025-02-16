@@ -83,8 +83,7 @@ async def update_user(tg_id: int, **kwargs):
             result = await s.execute(stmt)
             user = result.scalar_one()
             for key, value in kwargs.items():
-                if value is not None:
-                    setattr(user, key, value)
+                setattr(user, key, value)
             await s.commit()
             await s.refresh(user)
             return UserSchema.model_validate(user, from_attributes=True) if user else None

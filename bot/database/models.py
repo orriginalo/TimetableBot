@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, text
+from sqlalchemy import ARRAY, String, text
 
 from sqlalchemy.dialects.postgresql import JSONB, BIGINT
 
@@ -26,7 +26,7 @@ class User(Base):
   updated_at: Mapped[updated_at]
   group_id: Mapped[int | None]
   group_name: Mapped[str | None]
-  recent_groups: Mapped[list[str]]
+  recent_groups: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True, default=None)
 
 class Groups(Base):
   __tablename__ = "groups"

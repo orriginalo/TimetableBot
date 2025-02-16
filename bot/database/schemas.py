@@ -13,7 +13,7 @@ class UserSchema(BaseModel):
   updated_at: datetime
   group_id: int | None
   group_name: str | None
-  recent_groups: list[str]
+  recent_groups: list[str] | None
   
 class GroupSchema(BaseModel):
   uid: int

@@ -16,6 +16,7 @@ class SetGroup(StatesGroup):
   group_name = State()
   
 class SeeOtherTimetable(StatesGroup):
+  last_bot_msg = State()
   group_name = State()
 
 class ShowChanges(StatesGroup):
@@ -65,46 +66,81 @@ async def _(msg: Message, state: FSMContext):
 
 @router.message(F.text.lower().contains("сменить группу"))
 async def _(msg: Message, state: FSMContext):
-  await msg.answer("Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
+  await msg.answer("✍️ Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
   await state.set_state(SetGroup.group_name)
 
 @router.callback_query(F.data == "change-group")
 async def _(call: CallbackQuery, state: FSMContext):
-  await call.message.answer("Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
+  await call.message.answer("✍️ Введи название группы (например: <code>вдо-12</code>, <code>исдо-25</code>)", parse_mode="html", reply_markup=ReplyKeyboardRemove())
   await state.set_state(SetGroup.group_name)
 
 @router.message(F.text == "❔Расписание другой группы❔")
 async def _(msg: Message, state: FSMContext):
-  await msg.answer("Введи название группы", parse_mode="html")
+  user = await get_user_by_id(msg.from_user.id)
+
+  if user.recent_groups and len(user.recent_groups) > 0:
+    sent_message = await msg.answer("✍️ Введи название группы", parse_mode="html", reply_markup=await kb.get_recent_groups_keyboard(user))
+    await state.update_data(last_bot_msg=sent_message)
+  else:
+    await msg.answer("✍️ Введи название группы", parse_mode="html", reply_markup=await kb.get_recent_groups_keyboard(user))
   await state.set_state(SeeOtherTimetable.group_name)
 
 @router.callback_query(F.data == "back")
 async def _(call: CallbackQuery, state: FSMContext):
+  await call.message.edit_text(text="❌ Действие отменено.")
   try:
     await call.message.edit_reply_markup(reply_markup=kb.empty_inline)
   except:
     pass
-  await call.message.edit_text(text="❌ Действие отменено.")
   await state.clear()
   
 @router.callback_query(F.data == "back-settings")
 async def _(call: CallbackQuery, state: FSMContext):
   await call.message.edit_text(text="✅ Настройки применены.")
-  await call.message.edit_reply_markup(reply_markup=kb.empty_inline)
+  try:
+    await call.message.edit_reply_markup(reply_markup=kb.empty_inline)
+  except:
+    pass
   await state.clear()
+
+@router.callback_query(F.data.startswith("see-other-group_"), SeeOtherTimetable.group_name)
+async def _(call: CallbackQuery, state: FSMContext):
+  user = await get_user_by_id(call.from_user.id)
+  group_name = call.data.split("_")[1]
+  await state.update_data(group_name=group_name)
+  await call.message.answer("На какую неделю?", reply_markup=kb.other_group_when)
+  recent_groups = user.recent_groups
+  recent_groups.remove(group_name)
+  await update_user(call.from_user.id, recent_groups=recent_groups + [group_name])
+  await call.message.delete()
 
 @router.message(SeeOtherTimetable.group_name)
 async def _(msg: Message, state: FSMContext):
+  user = await get_user_by_id(msg.from_user.id)
   group_name = msg.text.strip().lower()
   if await get_group_by_name(group_name):
+    last_bot_msg: Message = (await state.get_data()).get("last_bot_msg", None)  
+    if last_bot_msg:
+      await last_bot_msg.edit_reply_markup(reply_markup=kb.empty_inline)
     await state.update_data(group_name=group_name)
     await msg.answer("На какую неделю?", reply_markup=kb.other_group_when)
+    recent_groups = user.recent_groups
+    if recent_groups:
+      if group_name not in recent_groups:
+        if len(recent_groups) == 2:
+          recent_groups.pop(0)
+        await update_user(msg.from_user.id, recent_groups=user.recent_groups + [group_name])
+      else:
+        recent_groups.remove(group_name)
+        await update_user(msg.from_user.id, recent_groups=recent_groups + [group_name])
+    else:
+      await update_user(msg.from_user.id, recent_groups=[group_name])
   else:
     await msg.answer("Группа не найдена. Попробуй еще раз.")
   
 @router.callback_query(F.data.contains("_other_group"))
 async def _(call: CallbackQuery, state: FSMContext):
-  group_name = (await state.get_data()).group_name
+  group_name = (await state.get_data())["group_name"]
   condition = call.data.split("_")[0]
   await call.message.delete()
   match condition:
@@ -147,6 +183,7 @@ async def _(call: CallbackQuery, state: FSMContext):
   match condition:
     case "show":
       await call.message.delete()
+      await call.bot.send_chat_action(call.from_user.id, "upload_photo")
       data = await state.get_data()
       changes_data = data["changes_data"]
       caption = changes_data["caption"]
@@ -160,8 +197,13 @@ async def _(call: CallbackQuery, state: FSMContext):
     case "dont-show":
       await call.message.delete()
   await state.clear()
-      
-      
+
+@router.callback_query(F.data == "clear-recent-groups")
+async def _(call: CallbackQuery):
+  user = await get_user_by_id(call.from_user.id)
+  user = await update_user(call.from_user.id, recent_groups=None)
+  await call.message.edit_reply_markup(reply_markup=await kb.get_settings_keyboard(user))
+  await call.message.answer("<i>Список последних групп очищен.</i>", parse_mode="html")
 @router.message()
 async def _(msg: Message):
   group_name = msg.text.strip()

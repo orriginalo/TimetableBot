@@ -5,6 +5,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from aiogram.types import Message, FSInputFile
+import bot.keyboards as kb
 
 load_dotenv(override=True)
 
@@ -42,7 +43,7 @@ async def fetch_screenshot_path_and_send(group_name: str, period: Literal["full"
                 tomorrow = (datetime.now() + timedelta(days=1)).strftime("%d.%m.%y")
                 caption = f"🗓️ Расписание на завтра <i>({tomorrow})</i>"
               
-              await msg.answer_photo(FSInputFile(decoded_line[5:-(len(decoded_line.split("|")[1])+1)].strip()), caption=caption if caption else "", parse_mode="html")
+              await msg.answer_photo(FSInputFile(decoded_line[5:-(len(decoded_line.split("|")[1])+1)].strip()), caption=caption if caption else "", parse_mode="html", reply_markup=kb.main_keyboard)
               await sent_message.delete()
               return
             if decoded_line.startswith("data:"):
