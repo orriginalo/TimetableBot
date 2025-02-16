@@ -130,15 +130,21 @@ async def send_changes_to_users(bot: Bot, date: str):
 
         # Если только 1 фото → отправляем обычное `send_photo()`
         if len(files) == 1:
-            await bot.send_photo(user["tg_id"], photo=files[0], caption=text, parse_mode="html")
+            try:
+                await bot.send_photo(user["tg_id"], photo=files[0], caption=text, parse_mode="html")
+            except Exception as e:
+                logger.error(f"Не удалось отправить изменения для {user['tg_id']}: {e}")
+                
         elif len(files) > 1:
-            # Создаём `media_group`
-            media = [InputMediaPhoto(media=f) for f in files]
-            media[0].caption = text  # Добавляем описание только к первой картинке
-            media[0].parse_mode = "html"
+            try:
+                # Создаём `media_group`
+                media = [InputMediaPhoto(media=f) for f in files]
+                media[0].caption = text  # Добавляем описание только к первой картинке
+                media[0].parse_mode = "html"
 
-            await bot.send_media_group(user["tg_id"], media=media)
-
+                await bot.send_media_group(user["tg_id"], media=media)
+            except Exception as e:
+                logger.error(f"Не удалось отправить изменения для {user["tg_id"]}: {e}")
 async def changes_to_tomorrow_exists():
     tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d.%m.%y")
     path_to_file = f"./data/changes/changes_{tomorrow_date}.pdf"
