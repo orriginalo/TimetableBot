@@ -1,5 +1,9 @@
 from utils.log import logger
 from datetime import datetime, timedelta
+import os
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 default_user_settings: dict = {
   "send_timetable_new_week": True,
@@ -25,26 +29,29 @@ MARGIN = 15
 CACHE_DURATION = timedelta(minutes=7)
 
 async def update_cache_duration():
-    global CACHE_DURATION
-    previous_duration = CACHE_DURATION
-    new_duration = None
-    current_hour = datetime.now().hour
-    print(current_hour)
+  global CACHE_DURATION
+  morning_hours = list(map(int, os.getenv("MORNING_HOURS", "6-10").split("-")))
+  day_hours = list(map(int, os.getenv("DAYTIME_HOURS", "10-18").split("-")))
+  evening_hours = list(map(int, os.getenv("EVENING_HOURS", "18-23").split("-")))
+  night_hours = list(map(int, os.getenv("NIGHT_HOURS", "23-6").split("-")))
 
-    # Устанавливаем длительность кэша в зависимости от промежутков времени
-    if 6 <= current_hour < 10:
-        new_duration = timedelta(minutes=20)  # Утро
-    elif 10 <= current_hour < 18:
-        new_duration = timedelta(minutes=40)  # День
-    elif 18 <= current_hour < 23:
-        new_duration = timedelta(minutes=7)  # Вечер
-    elif current_hour >= 23 or current_hour < 6:
-        new_duration = timedelta(minutes=50)  # Ночь
+  previous_duration = CACHE_DURATION
+  new_duration = None
+  current_hour = datetime.now().hour
 
-    if new_duration is not None:
-      if new_duration != previous_duration:
-        CACHE_DURATION = new_duration
-        logger.info(f"Cache duration updated to {CACHE_DURATION}")
+  if morning_hours[0] <= current_hour < morning_hours[1]:
+    new_duration = timedelta(minutes=int(os.getenv("MORNING_CACHE_TIME", 60)))  # Утро
+  elif day_hours[0] <= current_hour < day_hours[1]:
+    new_duration = timedelta(minutes=int(os.getenv("DAYTIME_CACHE_TIME", 120)))  # День
+  elif evening_hours[0] <= current_hour < evening_hours[1]:
+    new_duration = timedelta(minutes=int(os.getenv("EVENING_CACHE_TIME", 40)))  # Вечер
+  elif current_hour >= night_hours[0] or current_hour < night_hours[1]:
+    new_duration = timedelta(minutes=int(os.getenv("NIGHT_CACHE_TIME", 180)))  # Ночь
+
+  if new_duration is not None:
+    if new_duration != previous_duration:
+      CACHE_DURATION = new_duration
+      logger.info(f"Cache duration updated to {CACHE_DURATION}")
 
       
 
