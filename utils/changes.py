@@ -117,7 +117,7 @@ async def send_changes_to_users(bot: Bot, date: str):
 # User.settings['send_changes_when_isnt_group'].as_boolean() == True
     for user in users_with_setting:
         group = await get_group_by_name(user.group_name)
-        is_group_in_changes = await check_if_group_in_changes(group.name, date)
+        is_group_in_changes, page_number = await check_if_group_in_changes(group.name, date)
         if not is_group_in_changes and user.settings["send_changes_when_isnt_group"] == False:
             continue
         text = (
@@ -202,7 +202,7 @@ async def instantly_send_changes(msg: Message, state: FSMContext, user: dict, wi
     
     if with_ask:
         await msg.edit_text("⏳ Проверяю...")
-    is_group_in_changes = await check_if_group_in_changes(user.group_name, changes_date)
+    is_group_in_changes, page_number = await check_if_group_in_changes(user.group_name, changes_date)
     
     
     text = ""
@@ -246,13 +246,13 @@ async def check_if_group_in_changes(group_name: str, date: str):
     # Функция, которая будет выполняться в отдельном потоке
     def check():
         with pdfplumber.open(f"./data/changes/changes_{date}.pdf") as pdf:
-            for page in pdf.pages:
+            for i, page in enumerate(pdf.pages, start=1):
                 text = page.extract_text().lower()
                 text = text.splitlines()
                 for line in text:
                     if group_name in line and all(keyword not in line for keyword in ["прием", "подготовка", "пересдача", "консультация", "профориентационное"]):
-                        return True
-        return False
+                        return True, i
+        return False, 0
 
     # Выполняем check в фоновом потоке с помощью asyncio.to_thread
     return await asyncio.to_thread(check)

@@ -41,35 +41,49 @@ async def get_recent_groups_keyboard(user: UserSchema):
   return kb.adjust(3).as_markup()
 
 async def get_settings_keyboard(user: UserSchema):
-  def get_emoji_by_bool(var: bool):
-    return "✅" if var else "❌"
+    def get_emoji_by_bool(var: bool):
+        return "✅" if var else "❌"
 
-  def get_callback_by_bool(var: bool):
-    return "enable_" if var else "disable_"
+    def get_callback_by_bool(var: bool):
+        return "enable_" if var else "disable_"
 
-  settings_postfix = "_setting"
+    settings_postfix = "_setting"
 
-  settings = [
-    {"key": "send_timetable_new_week", "label": "Расписание с новой недели"},
-    {"key": "send_changes_updated", "label": "Новые изменения"},
-    {"key": "send_changes_when_isnt_group", "label": "Изменения когда группы нет"}
-  ]
+    timetable_settings = [
+        {"key": "send_timetable_new_week", "label": "Расписание с новой недели 🗓"},
+    ]
+    changes_settings = [
+        {"key": "send_changes_updated", "label": "Новые изменения 📋"},
+        {"key": "send_changes_when_isnt_group", "label": "Присылать изменения когда группы нет"},
+        {"key": "only_page_with_group_in_changes", "label": "Только страница с группой в изменениях"} 
+    ]
 
-  kb = InlineKeyboardBuilder()
+    kb = InlineKeyboardBuilder()
 
-  kb.add(InlineKeyboardButton(text="🔄️ Сменить группу", callback_data="change-group"))
+    kb.add(InlineKeyboardButton(text="🔄️ Сменить группу", callback_data="change-group"))
+    if user.recent_groups:
+        kb.add(InlineKeyboardButton(text="🔄 Сбросить последние группы", callback_data="clear-recent-groups"))
 
-  if user.recent_groups:
-    kb.add(InlineKeyboardButton(text="🔄 Сбросить последние группы.", callback_data="clear-recent-groups"))
+    for setting in timetable_settings:
+        key = setting["key"]
+        label = setting["label"]
+        value = user.settings.get(key, False)  # По умолчанию False, если нет ключа
+        kb.add(InlineKeyboardButton(
+            text=f"{get_emoji_by_bool(value)} {label}",
+            callback_data=f"{get_callback_by_bool(value)}{key}{settings_postfix}"
+        ))
 
-  for setting in settings:
-    key = setting["key"]
-    label = setting["label"]
-    value = user.settings.get(key, False)  # По умолчанию False, если нет ключа
-    kb.add(InlineKeyboardButton(
-      text=f"{get_emoji_by_bool(value)} {label}",
-      callback_data=f"{get_callback_by_bool(value)}{key}{settings_postfix}"
-    ))
+    for setting in changes_settings:
+        key = setting["key"]
+        label = setting["label"]
+        value = user.settings.get(key, False)  # По умолчанию False, если нет ключа
+        kb.add(InlineKeyboardButton(
+            text=f"{get_emoji_by_bool(value)} {label}",
+            callback_data=f"{get_callback_by_bool(value)}{key}{settings_postfix}"
+        ))
+#feat: обновлены настройки для отправки изменений и добавлены новые параметры
+    # Кнопка назад
+    kb.add(InlineKeyboardButton(text="« Назад", callback_data="back-settings"))
 
-  kb.add(InlineKeyboardButton(text="« Назад", callback_data="back-settings"))
-  return kb.adjust(1).as_markup()
+    return kb.adjust(1).as_markup()
+
