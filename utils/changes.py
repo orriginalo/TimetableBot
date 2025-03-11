@@ -5,7 +5,7 @@ import pdfplumber
 import asyncio
 from datetime import datetime, timedelta
 from aiogram import Bot
-from aiogram.types import FSInputFile, InputMediaPhoto, Message
+from aiogram.types import FSInputFile, InputMediaPhoto, Message, InputMedia
 from utils.log import logger
 from bot.database.models import User
 from bot.database.queries.group import get_group_by_name
@@ -97,24 +97,15 @@ async def send_changes_to_users(bot: Bot, date: str):
 
     users_with_setting = await get_users(User.settings['send_changes_updated'].as_boolean() == True)
   
-    files = []
+    
     today_date = datetime.today().strftime('%d.%m.%y')
     tomorrow_date = (datetime.today() + timedelta(days=1)).strftime('%d.%m.%y')
   
     # Конвертируем PDF в PNG
     await pdf_to_png(f"./data/changes/changes_{date}.pdf", f"./data/changes/", date)
 
-    # Собираем файлы изображений
-    files_paths = []
-    for f in os.listdir(f"./data/changes/"):
-        if f.endswith(".png") and date in f:
-            files_paths.append(f"./data/changes/{f}")
-    files_paths.sort()
-  
-    for path in files_paths:
-        files.append(FSInputFile(f"{path}"))
-  
-# User.settings['send_changes_when_isnt_group'].as_boolean() == True
+    
+
     for user in users_with_setting:
         group = await get_group_by_name(user.group_name)
         if group:
@@ -129,13 +120,31 @@ async def send_changes_to_users(bot: Bot, date: str):
                 f"<code>{user.group_name.capitalize()}</code> <b>нет</b> в списке изменений."
             )
 
-            # Если только 1 фото → отправляем обычное `send_photo()`
-            if len(files) == 1:
+            # Собираем файлы изображений
+            files_paths = []
+            for f in os.listdir(f"./data/changes/"):
+                if f.endswith(".png") and date in f:
+                    files_paths.append(f"./data/changes/{f}")
+            files_paths.sort()
+
+            files = [FSInputFile(f"{path}") for path in files_paths]
+
+            if user.settings["only_page_with_group_in_changes"] == True and is_group_in_changes:
+                
+                file_to_send = next((file for i, file in enumerate(files) if f"{date}_{page_number}" in files_paths[i] ), None)
+
+                if file_to_send:
+                    try:
+                        await bot.send_photo(user.tg_id, photo=file_to_send, caption=text, parse_mode="html")
+                    except Exception as e:
+                        logger.error(f"Не удалось отправить изменения для {user.tg_id}: {e}")
+            
+            elif len(files) == 1:
                 try:
                     await bot.send_photo(user.tg_id, photo=files[0], caption=text, parse_mode="html")
                 except Exception as e:
                     logger.error(f"Не удалось отправить изменения для {user.tg_id}: {e}")
-                    
+            
             elif len(files) > 1:
                 try:
                     # Создаём `media_group`
@@ -213,7 +222,7 @@ async def instantly_send_changes(msg: Message, state: FSMContext, user: dict, wi
     else:
         text = f"Изменения на <b>{changes_date}</b>.\n" + f"<code>{user.group_name.capitalize()}</code> <b>есть</b> в списке изменений!"
         
-    await state.update_data(changes_data={"is_group_in_changes": is_group_in_changes, "changes_date": changes_date, "media": media, "caption": text})
+    await state.update_data(changes_data={"is_group_in_changes": is_group_in_changes, "changes_date": changes_date, "media": media, "caption": text, "page_number": page_number})
         
     if not is_group_in_changes:
         if with_ask:
@@ -232,14 +241,20 @@ async def instantly_send_changes(msg: Message, state: FSMContext, user: dict, wi
                 media[0].parse_mode = "html"
                 await msg.bot.send_media_group(user.tg_id, media=media)
     else:
-        if with_ask:
-            await msg.edit_text("⏳ Отправляю...")
-        if len(media) == 1:
-            await msg.bot.send_photo(user.tg_id, photo=media[0], caption=text, parse_mode="html")
-        elif len(media) > 1:
-            media[0].caption = text
-            media[0].parse_mode = "html"
-            await msg.bot.send_media_group(user.tg_id, media=media)
+        if user.settings["only_page_with_group_in_changes"] == True and is_group_in_changes:
+          file_to_send = next((photo for i, photo in enumerate(media) if f"{changes_date}_{page_number}" in png_files[i]), None)
+          if file_to_send:
+                await msg.bot.send_photo(user.tg_id, photo=file_to_send.media, caption=text, parse_mode="html")
+                
+        else:
+            if with_ask:
+                await msg.edit_text("⏳ Отправляю...")
+            if len(media) == 1:
+                await msg.bot.send_photo(user.tg_id, photo=media[0], caption=text, parse_mode="html")
+            elif len(media) > 1:
+                media[0].caption = text
+                media[0].parse_mode = "html"
+                await msg.bot.send_media_group(user.tg_id, media=media)
         await msg.delete()
 
 async def check_if_group_in_changes(group_name: str, date: str):
