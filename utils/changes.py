@@ -117,34 +117,36 @@ async def send_changes_to_users(bot: Bot, date: str):
 # User.settings['send_changes_when_isnt_group'].as_boolean() == True
     for user in users_with_setting:
         group = await get_group_by_name(user.group_name)
-        is_group_in_changes, page_number = await check_if_group_in_changes(group.name, date)
-        if not is_group_in_changes and user.settings["send_changes_when_isnt_group"] == False:
-            continue
-        text = (
-            f"🔔 Появились изменения на <b>{date}</b>.\n"
-            f"<code>{user.group_name.capitalize()}</code> <b>есть</b> в списке изменений!"
-        ) if is_group_in_changes else (
-            f"🔔 Появились изменения на <b>{date}</b>.\n"
-            f"<code>{user.group_name.capitalize()}</code> <b>нет</b> в списке изменений."
-        )
+        if group:
+            is_group_in_changes, page_number = await check_if_group_in_changes(group.name, date)
+            if not is_group_in_changes and user.settings["send_changes_when_isnt_group"] == False:
+                continue
+            text = (
+                f"🔔 Появились изменения на <b>{date}</b>.\n"
+                f"<code>{user.group_name.capitalize()}</code> <b>есть</b> в списке изменений!"
+            ) if is_group_in_changes else (
+                f"🔔 Появились изменения на <b>{date}</b>.\n"
+                f"<code>{user.group_name.capitalize()}</code> <b>нет</b> в списке изменений."
+            )
 
-        # Если только 1 фото → отправляем обычное `send_photo()`
-        if len(files) == 1:
-            try:
-                await bot.send_photo(user.tg_id, photo=files[0], caption=text, parse_mode="html")
-            except Exception as e:
-                logger.error(f"Не удалось отправить изменения для {user.tg_id}: {e}")
-                
-        elif len(files) > 1:
-            try:
-                # Создаём `media_group`
-                media = [InputMediaPhoto(media=f) for f in files]
-                media[0].caption = text  # Добавляем описание только к первой картинке
-                media[0].parse_mode = "html"
+            # Если только 1 фото → отправляем обычное `send_photo()`
+            if len(files) == 1:
+                try:
+                    await bot.send_photo(user.tg_id, photo=files[0], caption=text, parse_mode="html")
+                except Exception as e:
+                    logger.error(f"Не удалось отправить изменения для {user.tg_id}: {e}")
+                    
+            elif len(files) > 1:
+                try:
+                    # Создаём `media_group`
+                    media = [InputMediaPhoto(media=f) for f in files]
+                    media[0].caption = text  # Добавляем описание только к первой картинке
+                    media[0].parse_mode = "html"
 
-                await bot.send_media_group(user.tg_id, media=media)
-            except Exception as e:
-                logger.error(f"Не удалось отправить изменения для {user.tg_id}: {e}")
+                    await bot.send_media_group(user.tg_id, media=media)
+                except Exception as e:
+                    logger.error(f"Не удалось отправить изменения для {user.tg_id}: {e}")
+                    
 async def changes_to_tomorrow_exists():
     tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d.%m.%y")
     path_to_file = f"./data/changes/changes_{tomorrow_date}.pdf"
