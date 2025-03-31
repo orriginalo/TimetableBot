@@ -12,7 +12,7 @@ services:
     environment:
       - TZ=Europe/Samara
       - PYTHONUNBUFFERED=1
-    restart: no
+    restart: unless-stopped
     networks:
       - ulstu-bots-network
       - internal
