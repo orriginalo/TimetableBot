@@ -285,7 +285,7 @@ async def get_changes_date(url: str):
         return None
 
 async def get_pdf_url_from_page():
-    url = "https://ulstu.ru/education/kei/student/schedule/"
+    url = "https://ulstu.ru/education/spo/kei/student/schedule/"
 
     logger.debug(f"Getting a page with URL: {url}")
     response = await asyncio.to_thread(requests.get, url)
