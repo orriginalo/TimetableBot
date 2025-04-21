@@ -5,8 +5,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from PIL import Image
 
-from rich import print
-import json
 from dotenv import load_dotenv
 import os
 
@@ -16,8 +14,12 @@ login = os.getenv("LOGIN")
 password = os.getenv("PASSWORD")
 
 
-
-def download_timetable(driver, groups: list[str], make_screenshot: bool = False, only_screenshot: bool = False):
+def download_timetable(
+    driver,
+    groups: list[str],
+    make_screenshot: bool = False,
+    only_screenshot: bool = False,
+):
     logger.debug(f"Started downloading timetable for groups: {groups}...")
     try:
         for group in groups:
@@ -31,14 +33,18 @@ def download_timetable(driver, groups: list[str], make_screenshot: bool = False,
                     )
                 )
             except TimeoutException:
-                logger.error(f"Parent container not found for group {group} within 10 seconds.")
+                logger.error(
+                    f"Parent container not found for group {group} within 10 seconds."
+                )
                 continue  # Skip to next group if element not found
 
             page_html = driver.page_source
 
             if make_screenshot:
                 if not parent_container:
-                    logger.error(f"Cannot take screenshot for {group}: parent container missing.")
+                    logger.error(
+                        f"Cannot take screenshot for {group}: parent container missing."
+                    )
                     continue
 
                 # Remove unwanted elements
@@ -52,7 +58,9 @@ def download_timetable(driver, groups: list[str], make_screenshot: bool = False,
                 """)
 
                 # Scroll to the container and take screenshot
-                driver.execute_script("arguments[0].scrollIntoView(true);", parent_container)
+                driver.execute_script(
+                    "arguments[0].scrollIntoView(true);", parent_container
+                )
                 driver.execute_script("window.scrollBy(0, 50);")
                 screenshot_path = f"./data/screenshots/{group.lower()}.png"
                 driver.save_screenshot(screenshot_path)
@@ -61,10 +69,10 @@ def download_timetable(driver, groups: list[str], make_screenshot: bool = False,
                 margin = 35
                 rect = parent_container.rect
                 crop_box = (
-                    max(0, int(rect['x']) - margin),
-                    max(0, int(rect['y']) - margin),
-                    int(rect['x'] + rect['width'] + margin),
-                    int(rect['y'] + rect['height'] + margin)
+                    max(0, int(rect["x"]) - margin),
+                    max(0, int(rect["y"]) - margin),
+                    int(rect["x"] + rect["width"] + margin),
+                    int(rect["y"] + rect["height"] + margin),
                 )
 
                 # Crop and save the image
