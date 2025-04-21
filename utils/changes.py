@@ -377,12 +377,34 @@ async def check_if_group_in_changes(group_name: str, date: str):
 
 async def get_changes_date(url: str):
     file_name = url.split("/")[-1]
-    date_match = re.search(r"\d{2}\.\d{2}\.\d{2}", file_name)
-    if date_match:
-        return date_match.group(0)
+    match = re.search(r"(\d{1,2})[- ]([a-zа-яё]+)", file_name.lower())
+
+    MONTHS_RU = {
+        "yanvarya": "01",
+        "fevralya": "02",
+        "marta": "03",
+        "aprelya": "04",
+        "maya": "05",
+        "iyunya": "06",
+        "iyulya": "07",
+        "avgusta": "08",
+        "sentyabrya": "09",
+        "oktyabrya": "10",
+        "noyabrya": "11",
+        "dekabrya": "12",
+    }
+
+    if match:
+        day, month_str = match.groups()
+        month_num = MONTHS_RU.get(month_str)
+        year = datetime.now().strftime("%y")
+        if month_num:
+            return f"{int(day):02d}.{month_num}.{year}"
+        else:
+            logger.debug(f"Unknown month: {month_str}")
     else:
-        logger.debug(f"Date not found in the file name: {file_name}")
-        return None
+        logger.debug(f"No date-like string found in file name: {file_name}")
+    return None
 
 
 async def get_pdf_url_from_page():
