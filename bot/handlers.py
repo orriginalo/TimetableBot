@@ -272,13 +272,6 @@ async def _(call: CallbackQuery):
     )
 
 
-@router.message()
-async def _(msg: Message):
-    group_name = msg.text.strip()
-    if await get_group_by_name(group_name):
-        await fetch_screenshot_path_and_send(group_name, "full", msg)
-
-
 @router.message(F.text == "bob6061")
 async def _(msg: Message, state: FSMContext):
     if msg.from_user.id == 1522039516:
@@ -301,3 +294,10 @@ async def _(msg: Message, state: FSMContext):
             except Exception as e:
                 print(f"Не удалось отправить сообщение пользователю {user.uid}: {e}")
     await state.clear()
+
+
+@router.message()
+async def _(msg: Message):
+    group_name = msg.text.strip()
+    if await get_group_by_name(group_name):
+        await fetch_screenshot_path_and_send(group_name, "full", msg)
