@@ -1,10 +1,11 @@
+import asyncio
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-from bot.database.queries.user import update_user, get_user_by_id
+from bot.database.queries.user import update_user, get_user_by_id, get_users
 from bot.database.queries.group import get_group_by_name
 
 import bot.keyboards as kb
@@ -23,6 +24,10 @@ class SeeOtherTimetable(StatesGroup):
 
 class ShowChanges(StatesGroup):
     changes_data = State()
+
+
+class SendToAllAdmin(StatesGroup):
+    text = State()
 
 
 router = Router()
@@ -272,3 +277,27 @@ async def _(msg: Message):
     group_name = msg.text.strip()
     if await get_group_by_name(group_name):
         await fetch_screenshot_path_and_send(group_name, "full", msg)
+
+
+@router.message(F.text == "bob6061")
+async def _(msg: Message, state: FSMContext):
+    if msg.from_user.id == 1522039516:
+        await state.set_state(SendToAllAdmin.text)
+        await msg.answer(
+            "<b>Напишите сообщение которое хотите отправить всем</b>", parse_mode="html"
+        )
+
+
+@router.message(SendToAllAdmin.text)
+async def _(msg: Message, state: FSMContext):
+    users = await get_users()
+    await msg.send_copy(1522039516)
+    await asyncio.sleep(15)
+    for user in users:
+        if user.uid != 1579774985:
+            try:
+                await msg.send_copy(user.uid)
+                await asyncio.sleep(0.05)
+            except Exception as e:
+                print(f"Не удалось отправить сообщение пользователю {user.uid}: {e}")
+    await state.clear()
