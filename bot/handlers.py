@@ -287,12 +287,12 @@ async def _(msg: Message, state: FSMContext):
     await msg.send_copy(1522039516)
     await asyncio.sleep(15)
     for user in users:
-        if user.uid != 1579774985:
+        if user.tg_id != 1579774985:
             try:
-                await msg.send_copy(user.uid)
+                await msg.send_copy(user.tg_id)
                 await asyncio.sleep(0.05)
             except Exception as e:
-                print(f"Не удалось отправить сообщение пользователю {user.uid}: {e}")
+                print(f"Не удалось отправить сообщение пользователю {user.tg_id}: {e}")
     await state.clear()
 
 
