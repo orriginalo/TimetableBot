@@ -410,15 +410,22 @@ async def check_if_group_in_changes(group_name: str, date: str):
 async def get_changes_date(url: str):
     file_name = url.split("/")[-1]
 
+    def parse_date(date_str: str) -> str:
+        for fmt in ("%d.%m.%Y", "%d.%m.%y"):
+            try:
+                dt = datetime.strptime(date_str, fmt)
+                return dt.strftime("%d.%m.%y")
+            except ValueError:
+                continue
+        raise ValueError(f"Неподдерживаемый формат даты: {date_str}")
+
     # Пытаемся найти дату в формате dd.mm.yy или dd.mm.yyyy
     date_match = re.search(r"\d{2}\.\d{2}\.(\d{2}|\d{4})", file_name)
     if date_match:
         raw_date = date_match.group(0)
         try:
             # Пробуем распарсить и привести к нужному формату
-            parsed_date = datetime.strptime(
-                raw_date, "%d.%m.%Y" if len(raw_date.split(".")[2]) == 4 else "%d.%m.%y"
-            )
+            parsed_date = parse_date(raw_date)
             return parsed_date.strftime("%d.%m.%y")
         except ValueError:
             logger.debug(f"Invalid date format found: {raw_date}")
