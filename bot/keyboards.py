@@ -118,6 +118,7 @@ async def get_settings_keyboard(user: UserSchema):
         )
     # feat: обновлены настройки для отправки изменений и добавлены новые параметры
     # Кнопка назад
+    kb.add(InlineKeyboardButton(text="Источники", callback_data="sources"))
     kb.add(InlineKeyboardButton(text="« Назад", callback_data="back-settings"))
 
     return kb.adjust(1).as_markup()

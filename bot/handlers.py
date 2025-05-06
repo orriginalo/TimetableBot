@@ -272,6 +272,17 @@ async def _(call: CallbackQuery):
     )
 
 
+@router.callback_query(F.data == "sources")
+async def _(call: CallbackQuery):
+    await call.message.answer(
+        "Источники:\n"
+        "Расписание - https://time.ulstu.ru/timetable\n"
+        "Список групп - https://time.ulstu.ru/groups\n",
+        "Список преподавателей - https://time.ulstu.ru/teachers\n"
+        "Изменения - https://ulstu.ru/education/spo/kei/student/schedule\n",
+    )
+
+
 @router.message(F.text == "bob6061")
 async def _(msg: Message, state: FSMContext):
     if msg.from_user.id == 1522039516:
