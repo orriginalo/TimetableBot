@@ -410,7 +410,7 @@ async def check_if_group_in_changes(group_name: str, date: str):
 async def get_changes_date(url: str):
     file_name = url.split("/")[-1]
 
-    def parse_date(date_str: str) -> str:
+    async def parse_date(date_str: str) -> str:
         for fmt in ("%d.%m.%Y", "%d.%m.%y"):
             try:
                 dt = datetime.strptime(date_str, fmt)
@@ -425,7 +425,7 @@ async def get_changes_date(url: str):
         raw_date = date_match.group(0)
         try:
             # Пробуем распарсить и привести к нужному формату
-            return parse_date(raw_date)
+            return await parse_date(raw_date)
         except ValueError:
             logger.debug(f"Invalid date format found: {raw_date}")
             return None
