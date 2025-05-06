@@ -425,8 +425,7 @@ async def get_changes_date(url: str):
         raw_date = date_match.group(0)
         try:
             # Пробуем распарсить и привести к нужному формату
-            parsed_date = parse_date(raw_date)
-            return parsed_date.strftime("%d.%m.%y")
+            return parse_date(raw_date)
         except ValueError:
             logger.debug(f"Invalid date format found: {raw_date}")
             return None
