@@ -407,17 +407,18 @@ async def check_if_group_in_changes(group_name: str, date: str):
 #     return None
 
 
+async def parse_date(date_str: str) -> str:
+    for fmt in ("%d.%m.%Y", "%d.%m.%y"):
+        try:
+            dt = datetime.strptime(date_str, fmt)
+            return dt.strftime("%d.%m.%y")
+        except ValueError:
+            continue
+    raise ValueError(f"Неподдерживаемый формат даты: {date_str}")
+
+
 async def get_changes_date(url: str):
     file_name = url.split("/")[-1]
-
-    async def parse_date(date_str: str) -> str:
-        for fmt in ("%d.%m.%Y", "%d.%m.%y"):
-            try:
-                dt = datetime.strptime(date_str, fmt)
-                return dt.strftime("%d.%m.%y")
-            except ValueError:
-                continue
-        raise ValueError(f"Неподдерживаемый формат даты: {date_str}")
 
     # Пытаемся найти дату в формате dd.mm.yy или dd.mm.yyyy
     date_match = re.search(r"\d{2}\.\d{2}\.(\d{2}|\d{4})", file_name)
