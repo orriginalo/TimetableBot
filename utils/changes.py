@@ -421,7 +421,7 @@ async def get_changes_date(url: str):
     file_name = url.split("/")[-1]
 
     # Пытаемся найти дату в формате dd.mm.yy или dd.mm.yyyy
-    date_match = re.search(r"\d{2}\.\d{2}\.(\d{2}|\d{4})", file_name)
+    date_match = re.search(r"(\d{2}\.\d{2}\.\d{4})", file_name)
     if date_match:
         raw_date = date_match.group(0)
         try:
