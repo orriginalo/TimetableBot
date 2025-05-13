@@ -23,10 +23,10 @@ CACHE_DURATION = timedelta(minutes=7)
 
 async def update_cache_duration():
     global CACHE_DURATION
-    morning_hours = list(map(int, os.getenv("MORNING_HOURS", "6-10").split("-")))
-    day_hours = list(map(int, os.getenv("DAYTIME_HOURS", "10-18").split("-")))
-    evening_hours = list(map(int, os.getenv("EVENING_HOURS", "18-23").split("-")))
-    night_hours = list(map(int, os.getenv("NIGHT_HOURS", "23-6").split("-")))
+    morning_hours = os.getenv("MORNING_HOURS", "6-10").split("-")
+    day_hours = os.getenv("DAYTIME_HOURS", "10-18").split("-")
+    evening_hours = os.getenv("EVENING_HOURS", "18-23").split("-")
+    night_hours = os.getenv("NIGHT_HOURS", "23-6").split("-")
 
     previous_duration = CACHE_DURATION
     new_duration = None
