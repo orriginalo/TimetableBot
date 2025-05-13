@@ -81,8 +81,8 @@ async def check_if_exists_changes_pdf_to_tomorrow():
     path_to_files = "./data/changes"
     files = await asyncio.to_thread(os.listdir, path_to_files)
 
-    today_date = datetime.today().strftime("%d.%m.%y")
-    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d.%m.%y")
+    today_date = datetime.today().strftime("%d.%m.%Y")
+    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d.%m.%Y")
 
     for file in files:
         if file.endswith(".pdf"):
