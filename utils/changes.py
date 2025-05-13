@@ -17,6 +17,8 @@ from bs4 import BeautifulSoup
 import bot.keyboards as kb
 from aiogram.fsm.context import FSMContext
 
+date_format = "%d.%m.%Y"
+
 
 async def check_changes_job(bot: Bot):
     global already_sended
@@ -33,7 +35,7 @@ async def check_changes_job(bot: Bot):
         "latest_date"
     ]  # Дата текущих изменений
     if filename is not None:
-        today_date = datetime.today().strftime("%d.%m.%y")
+        today_date = datetime.today().strftime(date_format)
 
         if (
             (last_send_date is None and latest_changes_date is None)
@@ -46,7 +48,7 @@ async def check_changes_job(bot: Bot):
                 and current_changes_date != latest_changes_date
             )
         ):
-            last_send_date = datetime.today().strftime("%d.%m.%y")
+            last_send_date = datetime.today().strftime(date_format)
             last_send_date = today_date
             logger.info(f"Changes for tomorrow found: {filename}")
             latest_changes_date = current_changes_date
@@ -81,8 +83,8 @@ async def check_if_exists_changes_pdf_to_tomorrow():
     path_to_files = "./data/changes"
     files = await asyncio.to_thread(os.listdir, path_to_files)
 
-    today_date = datetime.today().strftime("%d.%m.%Y")
-    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d.%m.%Y")
+    today_date = datetime.today().strftime(date_format)
+    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime(date_format)
 
     for file in files:
         if file.endswith(".pdf"):
@@ -208,7 +210,7 @@ async def send_changes_to_users(bot: Bot, date: str):
 
 
 async def changes_to_tomorrow_exists():
-    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime("%d.%m.%y")
+    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime(date_format)
     path_to_file = f"./data/changes/changes_{tomorrow_date}.pdf"
     return os.path.exists(path_to_file)
 
@@ -222,7 +224,7 @@ def get_last_png_changes():
         if f.startswith("changes_") and f.endswith(".pdf"):
             date_str = f.replace("changes_", "").replace(".pdf", "")
             try:
-                date = datetime.strptime(date_str, "%d.%m.%y")
+                date = datetime.strptime(date_str, date_format)
                 pdf_files.append((date, f))
             except ValueError:
                 continue
@@ -231,7 +233,7 @@ def get_last_png_changes():
     pdf_files.sort(reverse=True, key=lambda x: x[0])
 
     if pdf_files:
-        latest_date = pdf_files[0][0].strftime("%d.%m.%y")
+        latest_date = pdf_files[0][0].strftime(date_format)
 
         # Ищем соответствующие PNG файлы
         png_files = [
@@ -408,10 +410,10 @@ async def check_if_group_in_changes(group_name: str, date: str):
 
 
 # async def parse_date(date_str: str) -> str:
-#     for fmt in ("%d.%m.%Y", "%d.%m.%y"):
+#     for fmt in (date_format, date_format):
 #         try:
 #             dt = datetime.strptime(date_str, fmt)
-#             return dt.strftime("%d.%m.%y")
+#             return dt.strftime(date_format)
 #         except ValueError:
 #             continue
 #     raise ValueError(f"Неподдерживаемый формат даты: {date_str}")
@@ -426,8 +428,8 @@ async def get_changes_date(url: str):
         raw_date = date_match.group(0)
         try:
             # Пробуем распарсить и привести к нужному формату
-            parsed_date = datetime.strptime(raw_date, "%d.%m.%Y")
-            return parsed_date.strftime("%d.%m.%Y")
+            parsed_date = datetime.strptime(raw_date, date_format)
+            return parsed_date.strftime(date_format)
         except ValueError:
             logger.debug(f"Invalid date format found: {raw_date}")
             return None
