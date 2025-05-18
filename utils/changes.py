@@ -18,13 +18,20 @@ import bot.keyboards as kb
 from aiogram.fsm.context import FSMContext
 
 date_format = "%d.%m.%Y"
+check_attempts = 0
 
 
 async def check_changes_job(bot: Bot):
-    global already_sended
+    global already_sended, date_format, check_attempts
     pdf_url = await get_pdf_url_from_page()
     await download_pdf_from_url(pdf_url)
     filename = await check_if_exists_changes_pdf_to_tomorrow()
+    if filename is None and check_attempts == 0:
+        logger.info("Checking changes with %d.%m.%y...")
+        date_format = "%d.%m.%y"
+        check_attempts += 1
+        check_changes_job(bot)
+
     last_send_date = await get_setting(
         "last_send_changes_date"
     )  # Дата последней отправки изменений
@@ -60,6 +67,8 @@ async def check_changes_job(bot: Bot):
             await pdf_to_png(
                 f"./data/changes/changes_{date}.pdf", "./data/changes/", date
             )
+    date_format = "%d.%m.%Y"
+    check_attempts = 0
 
 
 def write_pdf_to_file(path_to_file: str, content: bytes):
