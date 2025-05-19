@@ -17,59 +17,63 @@ from bs4 import BeautifulSoup
 import bot.keyboards as kb
 from aiogram.fsm.context import FSMContext
 
-date_format = "%d.%m.%Y"
-check_attempts = 0
+class DateFormat:
+    fmt : str
+    regex : str
+    
+    def __init__(self, fmt: str, regex: str):
+        self.fmt = fmt
+        self.regex = regex
 
+main_date_format = "%d.%m.%Y"        
+try_formats = [DateFormat("%d.%m.%Y", r"\b\d{2}\.\d{2}\.\d{4}\b"), DateFormat("%d.%m.%y", r"\b\d{2}\.\d{2}\.\d{2}\b")] 
 
 async def check_changes_job(bot: Bot):
-    global already_sended, date_format, check_attempts
-    pdf_url = await get_pdf_url_from_page()
-    await download_pdf_from_url(pdf_url)
-    filename = await check_if_exists_changes_pdf_to_tomorrow()
-    if filename is None and check_attempts == 0:
-        logger.info("Checking changes with %d.%m.%y...")
-        date_format = "%d.%m.%y"
-        check_attempts += 1
-        check_changes_job(bot)
+    for date_format in try_formats:
+        logger.info(f"Checking changes with {date_format.fmt}...")
+        pdf_url: str = await get_pdf_url_from_page()  # 1. Получаем прямую ссылку на PDF файл
+        await download_pdf_from_url(pdf_url, date_format)  # 2. Скачиваем PDF файл и сохраняем его
+        filename: str | None = await check_if_exists_changes_pdf_to_tomorrow(date_format.fmt)  # 3. Проверяем, есть ли PDF файл с изменениями на завтра (парсит дату из названия файла)
 
-    last_send_date = await get_setting(
-        "last_send_changes_date"
-    )  # Дата последней отправки изменений
-    latest_changes_date = await get_setting(
-        "last_changes_date"
-    )  # Дата последних отправленных изменений
-    current_changes_date = get_last_png_changes()[
-        "latest_date"
-    ]  # Дата текущих изменений
-    if filename is not None:
-        today_date = datetime.today().strftime(date_format)
+        if filename is None:
+            continue
+        
+        last_send_date = await get_setting(
+            "last_send_changes_date"
+        )  # Дата последней отправки изменений
+        latest_changes_date = await get_setting(
+            "last_changes_date"
+        )  # Дата последних отправленных изменений
+        current_changes_date = get_last_png_changes()[
+            "latest_date"
+        ]  # Дата текущих изменений
+        
+        if filename is not None:
+            today_date = datetime.today().strftime(main_date_format)
 
-        if (
-            (last_send_date is None and latest_changes_date is None)
-            or (
-                last_send_date != today_date
-                and current_changes_date != latest_changes_date
-            )
-            or (
-                last_send_date == today_date
-                and current_changes_date != latest_changes_date
-            )
-        ):
-            last_send_date = datetime.today().strftime(date_format)
-            last_send_date = today_date
-            logger.info(f"Changes for tomorrow found: {filename}")
-            latest_changes_date = current_changes_date
-            await set_setting("last_send_changes_date", last_send_date)
-            await set_setting("last_changes_date", latest_changes_date)
-            await send_changes_to_users(bot, latest_changes_date)
-        else:
-            date = get_last_png_changes()["latest_date"]
-            await pdf_to_png(
-                f"./data/changes/changes_{date}.pdf", "./data/changes/", date
-            )
-    date_format = "%d.%m.%Y"
-    check_attempts = 0
-
+            if (
+                (last_send_date is None and latest_changes_date is None)
+                or (
+                    last_send_date != today_date
+                    and current_changes_date != latest_changes_date
+                )
+                or (
+                    last_send_date == today_date
+                    and current_changes_date != latest_changes_date
+                )
+            ):
+                last_send_date = datetime.today().strftime(main_date_format)
+                last_send_date = today_date
+                logger.info(f"Changes for tomorrow found: {filename.split("/")[-1]}")
+                latest_changes_date = current_changes_date
+                await set_setting("last_send_changes_date", last_send_date)
+                await set_setting("last_changes_date", latest_changes_date)
+                await send_changes_to_users(bot, latest_changes_date)
+            else:
+                date = get_last_png_changes()["latest_date"]
+                await pdf_to_png(
+                    f"./data/changes/changes_{date}.pdf", "./data/changes/", date
+                )
 
 def write_pdf_to_file(path_to_file: str, content: bytes):
     with open(path_to_file, "wb") as f:
@@ -92,8 +96,8 @@ async def check_if_exists_changes_pdf_to_tomorrow():
     path_to_files = "./data/changes"
     files = await asyncio.to_thread(os.listdir, path_to_files)
 
-    today_date = datetime.today().strftime(date_format)
-    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime(date_format)
+    today_date = datetime.today().strftime(main_date_format)
+    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime(main_date_format)
 
     for file in files:
         if file.endswith(".pdf"):
@@ -103,8 +107,8 @@ async def check_if_exists_changes_pdf_to_tomorrow():
     return None
 
 
-async def download_pdf_from_url(url: str):
-    changes_date = await get_changes_date(url)
+async def download_pdf_from_url(url: str, date_format: DateFormat):
+    changes_date = await get_changes_date(url, date_format)
 
     if not url:
         logger.error("PDF file not found.")
@@ -217,23 +221,16 @@ async def send_changes_to_users(bot: Bot, date: str):
                         f"Не удалось отправить изменения для {user.tg_id}: {e}"
                     )
 
-
-async def changes_to_tomorrow_exists():
-    tomorrow_date = (datetime.today() + timedelta(days=1)).strftime(date_format)
-    path_to_file = f"./data/changes/changes_{tomorrow_date}.pdf"
-    return os.path.exists(path_to_file)
-
-
 def get_last_png_changes():
     files = os.listdir("./data/changes/")
-    pdf_files = []
+    pdf_files: list[tuple[datetime, str]] = []
 
     # Собираем все PDF файлы и парсим даты
     for f in files:
         if f.startswith("changes_") and f.endswith(".pdf"):
             date_str = f.replace("changes_", "").replace(".pdf", "")
             try:
-                date = datetime.strptime(date_str, date_format)
+                date = datetime.strptime(date_str, main_date_format)
                 pdf_files.append((date, f))
             except ValueError:
                 continue
@@ -242,7 +239,7 @@ def get_last_png_changes():
     pdf_files.sort(reverse=True, key=lambda x: x[0])
 
     if pdf_files:
-        latest_date = pdf_files[0][0].strftime(date_format)
+        latest_date = pdf_files[0][0].strftime(main_date_format)
 
         # Ищем соответствующие PNG файлы
         png_files = [
@@ -428,17 +425,20 @@ async def check_if_group_in_changes(group_name: str, date: str):
 #     raise ValueError(f"Неподдерживаемый формат даты: {date_str}")
 
 
-async def get_changes_date(url: str):
+async def get_changes_date(url: str, date_format: DateFormat) -> str | None:
     file_name = url.split("/")[-1]
 
+    # 02.04.2025
+    # 02.04.25
+
     # Пытаемся найти дату в формате dd.mm.yy или dd.mm.yyyy
-    date_match = re.search(r"(\d{2}\.\d{2}\.\d{4})", file_name)
+    date_match = re.search(date_format.regex, file_name)
     if date_match:
         raw_date = date_match.group(0)
         try:
             # Пробуем распарсить и привести к нужному формату
-            parsed_date = datetime.strptime(raw_date, date_format)
-            return parsed_date.strftime(date_format)
+            parsed_date = datetime.strptime(date_format.fmt)
+            return parsed_date.strftime(main_date_format)
         except ValueError:
             logger.debug(f"Invalid date format found: {raw_date}")
             return None
@@ -448,6 +448,7 @@ async def get_changes_date(url: str):
 
 
 async def get_pdf_url_from_page():
+    
     url = "https://ulstu.ru/education/spo/kei/student/schedule/"
 
     logger.debug(f"Getting a page with URL: {url}")
