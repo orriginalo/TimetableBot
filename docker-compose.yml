@@ -33,6 +33,21 @@ services:
     networks:
       - internal
 
+  pg_admin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+    networks:
+      - internal
+    restart: unless-stopped
+    depends_on:
+      - db
+
 networks:
   internal:
     driver: bridge
