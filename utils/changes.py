@@ -33,7 +33,7 @@ async def check_changes_job(bot: Bot):
         logger.info(f"Checking changes with {date_format.fmt}...")
         pdf_url: str = await get_pdf_url_from_page()  # 1. Получаем прямую ссылку на PDF файл
         await download_pdf_from_url(pdf_url, date_format)  # 2. Скачиваем PDF файл и сохраняем его
-        filename: str | None = await check_if_exists_changes_pdf_to_tomorrow(date_format.fmt)  # 3. Проверяем, есть ли PDF файл с изменениями на завтра (парсит дату из названия файла)
+        filename: str | None = await check_if_exists_changes_pdf_to_tomorrow()  # 3. Проверяем, есть ли PDF файл с изменениями на завтра (парсит дату из названия файла)
 
         if filename is None:
             continue
@@ -437,7 +437,7 @@ async def get_changes_date(url: str, date_format: DateFormat) -> str | None:
         raw_date = date_match.group(0)
         try:
             # Пробуем распарсить и привести к нужному формату
-            parsed_date = datetime.strptime(date_format.fmt)
+            parsed_date: datetime = datetime.strptime(raw_date, date_format.fmt)
             return parsed_date.strftime(main_date_format)
         except ValueError:
             logger.debug(f"Invalid date format found: {raw_date}")
