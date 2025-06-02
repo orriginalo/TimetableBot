@@ -8,7 +8,6 @@ __pycache__
 .env
 
 *.dump
-config.py
 
 test.py
 setup.py
