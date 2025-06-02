@@ -1,4 +1,3 @@
-from datetime import timedelta
 from aiogram.types import FSInputFile
 from bot.database.models import User
 from bot.database.queries.user import get_users
@@ -7,8 +6,6 @@ from utils.log import logger
 from aiogram import Bot
 
 margin = 15
-CACHE_DURATION = timedelta(minutes=7)
-
 
 async def send_new_timetable(bot: Bot):
     logger.info("Sending timetable to next week...")
@@ -20,7 +17,7 @@ async def send_new_timetable(bot: Bot):
     for user in users_with_notifications:
         group_name = user.group_name
         logger.debug(
-            f"Started screenshotting timetable for group {group_name} (текущая неделя)..."
+            f"Started screening timetable for group {group_name} (текущая неделя)..."
         )
         screenshot_path = await get_screenshot_path(group_name, "nextweek")
 
