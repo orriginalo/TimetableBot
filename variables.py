@@ -1,6 +1,4 @@
-from utils.log import logger
 from datetime import datetime, timedelta
-import os
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
