@@ -7,22 +7,17 @@ from bot.handlers import router
 from bot.database.core import create_tables
 from bot.scheduler import start_scheduler
 from bot.middlewares import CheckState, MsgLoggerMiddleware
+from bot.config import settings
 
 from aiogram import Bot, Dispatcher
 
 load_dotenv()
 
-TOKEN = os.getenv("BOT_TOKEN")
-
-bot = Bot(token=TOKEN)
+bot = Bot(token=settings.BOT_TOKEN)
 dp = Dispatcher()
 
 dp.message.middleware(MsgLoggerMiddleware())
 dp.message.filter(CheckState())
-
-login = os.getenv("LOGIN")
-password = os.getenv("PASSWORD")
-
 
 async def create_data_directory():
     folders = [

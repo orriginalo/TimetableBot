@@ -1,20 +1,18 @@
 from datetime import datetime, timedelta
 from typing import Literal
 import aiohttp
-import os
-from dotenv import load_dotenv
 from aiogram.types import Message, FSInputFile
 import bot.keyboards as kb
+from bot.config import settings
 
-load_dotenv(override=True)
-
+API_URL = settings.API_URL
 
 async def fetch_screenshot_path_and_send(
     group_name: str,
     period: Literal["full", "nextweek", "today", "tomorrow"],
     msg: Message,
 ):
-    url = f"{os.getenv('API_URL')}/screenshots/{group_name}/{period}"  # Используем имя сервиса FastAPI
+    url = f"{API_URL}/screenshots/{group_name}/{period}"  # Используем имя сервиса FastAPI
     sent_message = await msg.answer("👀 Проверяю расписание...", parse_mode="html")
     period_text = {
         "full": "текущую неделю",
@@ -78,7 +76,7 @@ async def fetch_screenshot_path_and_send(
 
 
 async def get_screenshot_path(group_name: str, period: str):
-    url = f"{os.getenv('API_URL')}/screenshots/{group_name}/{period}"
+    url = f"{API_URL}/screenshots/{group_name}/{period}"
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             async for line in response.content:

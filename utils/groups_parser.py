@@ -1,20 +1,11 @@
 from bs4 import BeautifulSoup
 from bot.database.queries.group import add_group, delete_all_groups
+from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Логин и пароль из .env
-login = os.getenv("LOGIN")
-password = os.getenv("PASSWORD")
-
-
-async def parse_groups_and_add_to_db(driver):
+async def parse_groups_and_add_to_db(driver: Chrome) -> list[str]:
     driver.get("https://time.ulstu.ru/groups")
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located(

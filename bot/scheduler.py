@@ -1,8 +1,8 @@
 from aiogram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from utils.timetable.sender import send_new_timetable
-from utils.changes import check_changes_job
+from bot.service.timetable_send import send_new_timetable
+from bot.service.changes import check_changes_job
 from utils.log import logger
 
 scheduler = AsyncIOScheduler()

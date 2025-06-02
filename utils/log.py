@@ -1,17 +1,13 @@
 import logging
 import datetime
-
+from bot.config import settings
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
-
-def setup_logger():
+def setup_logger() -> logging.Logger:
     try:
-        log_level = getattr(logging, os.getenv("LOG_LEVEL", "INFO"))
+        log_level = getattr(logging, settings.LOG_LEVEL)
     except AttributeError:
-        print(os.getenv("LOG_LEVEL", "INFO"))
+        print(settings.LOG_LEVEL)
         print("Log level not found (check LOG_LEVEL in .env), defaulting to INFO")
         log_level = logging.INFO
 
