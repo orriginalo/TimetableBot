@@ -1,9 +1,5 @@
 import os
 from pydantic import BaseModel
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
-
 
 class Config(BaseModel):
   BOT_TOKEN: str = os.getenv("BOT_TOKEN")

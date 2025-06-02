@@ -1,7 +1,4 @@
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
 
 default_user_settings: dict = {
     "send_timetable_new_week": True,

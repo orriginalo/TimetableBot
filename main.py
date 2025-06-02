@@ -1,6 +1,5 @@
 import asyncio
 import os
-from dotenv import load_dotenv
 
 from utils.log import logger
 from bot.handlers import router
@@ -10,8 +9,6 @@ from bot.middlewares import CheckState, MsgLoggerMiddleware
 from bot.config import settings
 
 from aiogram import Bot, Dispatcher
-
-load_dotenv()
 
 bot = Bot(token=settings.BOT_TOKEN)
 dp = Dispatcher()
