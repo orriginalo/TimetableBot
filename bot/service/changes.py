@@ -443,12 +443,13 @@ async def get_changes_date(url: str, date_formats: list[DateFormat]) -> str | No
             try:
                 # Пробуем распарсить и привести к нужному формату
                 parsed_date: datetime = datetime.strptime(raw_date, fmt.fmt)
+                logger.info(f"Date parsed! : {parsed_date}")
                 return parsed_date.strftime(main_date_format)
             except ValueError:
                 logger.debug(f"Invalid date format found: {raw_date}")
                 continue
         else:
-            logger.debug(f"Date not found in the file name: {file_name}")
+            logger.debug(f"\nDate not found in the file name: {file_name}")
             continue
 
 
