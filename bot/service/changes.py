@@ -26,6 +26,7 @@ class DateFormat:
     def __init__(self, fmt: str = "", regex: str = "", normalize: None | Callable[[str], str] = None):
         self.fmt = fmt
         self.regex = regex
+        self.normalize = normalize
 
 
 
@@ -442,7 +443,7 @@ async def get_changes_date(url: str, date_formats: list[DateFormat]) -> str | No
 
     # Пытаемся найти дату в формате dd.mm.yy или dd.mm.yyyy
     for fmt in date_formats:
-        if fmt.normalize:
+        if fmt.normalize is not None:
             return fmt.normalize(file_name)
         logger.debug(f"Trying to parse date with format: {fmt.fmt}")
         date_match = re.search(fmt.regex, file_name)
