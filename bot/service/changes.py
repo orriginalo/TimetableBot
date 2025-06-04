@@ -128,7 +128,7 @@ async def download_pdf_from_url(url: str, date_formats: list[DateFormat]):
 
     path_to_file = f"./data/changes/changes_{changes_date}.pdf"
     await asyncio.to_thread(write_pdf_to_file, path_to_file, response.content)
-    logger.debug(f"PDF file is successfully saved as {path_to_file}")
+    logger.debug(f"PDF with changes saved as {path_to_file}")
 
 
 async def send_changes_to_users(bot: Bot, date: str):
@@ -446,10 +446,10 @@ async def get_changes_date(url: str, date_formats: list[DateFormat]) -> str | No
                 return parsed_date.strftime(main_date_format)
             except ValueError:
                 logger.debug(f"Invalid date format found: {raw_date}")
-                return None
+                continue
         else:
             logger.debug(f"Date not found in the file name: {file_name}")
-            return None
+            continue
 
 
 async def get_pdf_url_from_page():
