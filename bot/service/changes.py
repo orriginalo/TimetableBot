@@ -23,7 +23,7 @@ class DateFormat:
     regex: str
     normalize: None | Callable[[str], str]
     
-    def __init__(self, fmt: str, regex: str, normalize: None | Callable[[str], str] = None):
+    def __init__(self, fmt: str = "", regex: str = "", normalize: None | Callable[[str], str] = None):
         self.fmt = fmt
         self.regex = regex
 
