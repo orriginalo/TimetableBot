@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Callable
 import requests
 import pdfplumber
 import asyncio
@@ -18,20 +19,56 @@ import bot.keyboards as kb
 from aiogram.fsm.context import FSMContext
 
 class DateFormat:
-    fmt : str
-    regex : str
+    fmt: str
+    regex: str
+    normalize: None | Callable[[str], str]
     
-    def __init__(self, fmt: str, regex: str):
+    def __init__(self, fmt: str, regex: str, normalize: None | Callable[[str], str] = None):
         self.fmt = fmt
         self.regex = regex
 
-main_date_format = "%d.%m.%Y"        
+
+
+
+async def get_changes_date_by_monthname(url: str):
+    file_name = url.split("/")[-1]
+    match = re.search(r"(\d{1,2})[- ]([a-zа-яё]+)", file_name.lower())
+
+    MONTHS_RU = {
+        "yanvarya": "01",
+        "fevralya": "02",
+        "marta": "03",
+        "aprelya": "04",
+        "maya": "05",
+        "iyunya": "06",
+        "iyulya": "07",
+        "avgusta": "08",
+        "sentyabrya": "09",
+        "oktyabrya": "10",
+        "noyabrya": "11",
+        "dekabrya": "12",
+    }
+
+    if match:
+        day, month_str = match.groups()
+        month_num = MONTHS_RU.get(month_str)
+        year = datetime.now().strftime("%y")
+        if month_num:
+            return f"{int(day):02d}.{month_num}.{year}"
+        else:
+            logger.debug(f"Unknown month: {month_str}")
+    else:
+        logger.debug(f"No date-like string found in file name: {file_name}")
+    return None
+
+main_date_format = "%d.%m.%Y"
 try_formats = [
     DateFormat("%d.%m.%Y", r"\b\d{2}\.\d{2}\.\d{4}\b"),
     DateFormat("%d.%m.%y", r"\b\d{2}\.\d{2}\.\d{2}\b"),
     DateFormat("%d.%m..%Y", r"\b\d{2}\.\d{2}\..\d{4}\b"),
     DateFormat("%d.%m..%y", r"\b\d{2}\.\d{2}\..\d{2}\b"),
-    ] 
+    DateFormat(normalize=get_changes_date_by_monthname),
+    ]
 
 async def check_changes_job(bot: Bot):
     pdf_url: str = await get_pdf_url_from_page()  # 1. Получаем прямую ссылку на PDF файл
@@ -386,37 +423,6 @@ async def check_if_group_in_changes(group_name: str, date: str):
     return await asyncio.to_thread(check)
 
 
-# async def get_changes_date(url: str):
-#     file_name = url.split("/")[-1]
-#     match = re.search(r"(\d{1,2})[- ]([a-zа-яё]+)", file_name.lower())
-
-#     MONTHS_RU = {
-#         "yanvarya": "01",
-#         "fevralya": "02",
-#         "marta": "03",
-#         "aprelya": "04",
-#         "maya": "05",
-#         "iyunya": "06",
-#         "iyulya": "07",
-#         "avgusta": "08",
-#         "sentyabrya": "09",
-#         "oktyabrya": "10",
-#         "noyabrya": "11",
-#         "dekabrya": "12",
-#     }
-
-#     if match:
-#         day, month_str = match.groups()
-#         month_num = MONTHS_RU.get(month_str)
-#         year = datetime.now().strftime("%y")
-#         if month_num:
-#             return f"{int(day):02d}.{month_num}.{year}"
-#         else:
-#             logger.debug(f"Unknown month: {month_str}")
-#     else:
-#         logger.debug(f"No date-like string found in file name: {file_name}")
-#     return None
-
 
 # async def parse_date(date_str: str) -> str:
 #     for fmt in (date_format, date_format):
@@ -436,6 +442,8 @@ async def get_changes_date(url: str, date_formats: list[DateFormat]) -> str | No
 
     # Пытаемся найти дату в формате dd.mm.yy или dd.mm.yyyy
     for fmt in date_formats:
+        if fmt.normalize:
+            return fmt.normalize(file_name)
         logger.debug(f"Trying to parse date with format: {fmt.fmt}")
         date_match = re.search(fmt.regex, file_name)
         if date_match:
@@ -443,13 +451,13 @@ async def get_changes_date(url: str, date_formats: list[DateFormat]) -> str | No
             try:
                 # Пробуем распарсить и привести к нужному формату
                 parsed_date: datetime = datetime.strptime(raw_date, fmt.fmt)
-                logger.info(f"Date parsed! : {parsed_date}")
+                logger.info(f"Date parsed! : {parsed_date.date()}")
                 return parsed_date.strftime(main_date_format)
             except ValueError:
                 logger.debug(f"Invalid date format found: {raw_date}")
                 continue
         else:
-            logger.debug(f"\nDate not found in the file name: {file_name}")
+            logger.debug(f"Date not found in the file name: {file_name}")
             continue
 
 
