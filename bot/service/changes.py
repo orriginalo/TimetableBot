@@ -26,54 +26,57 @@ class DateFormat:
         self.regex = regex
 
 main_date_format = "%d.%m.%Y"        
-try_formats = [DateFormat("%d.%m.%Y", r"\b\d{2}\.\d{2}\.\d{4}\b"), DateFormat("%d.%m.%y", r"\b\d{2}\.\d{2}\.\d{2}\b")] 
+try_formats = [
+    DateFormat("%d.%m.%Y", r"\b\d{2}\.\d{2}\.\d{4}\b"),
+    DateFormat("%d.%m.%y", r"\b\d{2}\.\d{2}\.\d{2}\b"),
+    DateFormat("%d.%m..%Y", r"\b\d{2}\.\d{2}\..\d{4}\b"),
+    DateFormat("%d.%m..%y", r"\b\d{2}\.\d{2}\..\d{2}\b"),
+    ] 
 
 async def check_changes_job(bot: Bot):
-    for date_format in try_formats:
-        logger.info(f"Checking changes with {date_format.fmt}...")
-        pdf_url: str = await get_pdf_url_from_page()  # 1. Получаем прямую ссылку на PDF файл
-        await download_pdf_from_url(pdf_url, date_format)  # 2. Скачиваем PDF файл и сохраняем его
-        filename: str | None = await check_if_exists_changes_pdf_to_tomorrow()  # 3. Проверяем, есть ли PDF файл с изменениями на завтра (парсит дату из названия файла)
+    pdf_url: str = await get_pdf_url_from_page()  # 1. Получаем прямую ссылку на PDF файл
+    await download_pdf_from_url(pdf_url, try_formats)  # 2. Скачиваем PDF файл и сохраняем его
+    filename: str | None = await check_if_exists_changes_pdf_to_tomorrow()  # 3. Проверяем, есть ли PDF файл с изменениями на завтра (парсит дату из названия файла)
 
-        if filename is None:
-            continue
-        
-        last_send_date = await get_setting(
-            "last_send_changes_date"
-        )  # Дата последней отправки изменений
-        latest_changes_date = await get_setting(
-            "last_changes_date"
-        )  # Дата последних отправленных изменений
-        current_changes_date = get_last_png_changes()[
-            "latest_date"
-        ]  # Дата текущих изменений
-        
-        if filename is not None:
-            today_date = datetime.today().strftime(main_date_format)
+    if filename is None:
+        return
+    
+    last_send_date = await get_setting(
+        "last_send_changes_date"
+    )  # Дата последней отправки изменений
+    latest_changes_date = await get_setting(
+        "last_changes_date"
+    )  # Дата последних отправленных изменений
+    current_changes_date = get_last_png_changes()[
+        "latest_date"
+    ]  # Дата текущих изменений
+    
+    if filename is not None:
+        today_date = datetime.today().strftime(main_date_format)
 
-            if (
-                (last_send_date is None and latest_changes_date is None)
-                or (
-                    last_send_date != today_date
-                    and current_changes_date != latest_changes_date
-                )
-                or (
-                    last_send_date == today_date
-                    and current_changes_date != latest_changes_date
-                )
-            ):
-                last_send_date = datetime.today().strftime(main_date_format)
-                last_send_date = today_date
-                logger.info(f"Changes for tomorrow found: {filename.split("/")[-1]}")
-                latest_changes_date = current_changes_date
-                await set_setting("last_send_changes_date", last_send_date)
-                await set_setting("last_changes_date", latest_changes_date)
-                await send_changes_to_users(bot, latest_changes_date)
-            else:
-                date = get_last_png_changes()["latest_date"]
-                await pdf_to_png(
-                    f"./data/changes/changes_{date}.pdf", "./data/changes/", date
-                )
+        if (
+            (last_send_date is None and latest_changes_date is None)
+            or (
+                last_send_date != today_date
+                and current_changes_date != latest_changes_date
+            )
+            or (
+                last_send_date == today_date
+                and current_changes_date != latest_changes_date
+            )
+        ):
+            last_send_date = datetime.today().strftime(main_date_format)
+            last_send_date = today_date
+            logger.info(f"Changes for tomorrow found: {filename.split("/")[-1]}")
+            latest_changes_date = current_changes_date
+            await set_setting("last_send_changes_date", last_send_date)
+            await set_setting("last_changes_date", latest_changes_date)
+            await send_changes_to_users(bot, latest_changes_date)
+        else:
+            date = get_last_png_changes()["latest_date"]
+            await pdf_to_png(
+                f"./data/changes/changes_{date}.pdf", "./data/changes/", date
+            )
 
 def write_pdf_to_file(path_to_file: str, content: bytes):
     with open(path_to_file, "wb") as f:
@@ -107,9 +110,9 @@ async def check_if_exists_changes_pdf_to_tomorrow():
     return None
 
 
-async def download_pdf_from_url(url: str, date_format: DateFormat):
-    changes_date = await get_changes_date(url, date_format)
-
+async def download_pdf_from_url(url: str, date_formats: list[DateFormat]):
+    changes_date: str | None = await get_changes_date(url, date_formats)
+        
     if not url:
         logger.error("PDF file not found.")
         return
@@ -425,26 +428,28 @@ async def check_if_group_in_changes(group_name: str, date: str):
 #     raise ValueError(f"Неподдерживаемый формат даты: {date_str}")
 
 
-async def get_changes_date(url: str, date_format: DateFormat) -> str | None:
+async def get_changes_date(url: str, date_formats: list[DateFormat]) -> str | None:
     file_name = url.split("/")[-1]
 
     # 02.04.2025
     # 02.04.25
 
     # Пытаемся найти дату в формате dd.mm.yy или dd.mm.yyyy
-    date_match = re.search(date_format.regex, file_name)
-    if date_match:
-        raw_date = date_match.group(0)
-        try:
-            # Пробуем распарсить и привести к нужному формату
-            parsed_date: datetime = datetime.strptime(raw_date, date_format.fmt)
-            return parsed_date.strftime(main_date_format)
-        except ValueError:
-            logger.debug(f"Invalid date format found: {raw_date}")
+    for fmt in date_formats:
+        logger.debug(f"Trying to parse date with format: {fmt.fmt}")
+        date_match = re.search(fmt.regex, file_name)
+        if date_match:
+            raw_date = date_match.group(0)
+            try:
+                # Пробуем распарсить и привести к нужному формату
+                parsed_date: datetime = datetime.strptime(raw_date, fmt.fmt)
+                return parsed_date.strftime(main_date_format)
+            except ValueError:
+                logger.debug(f"Invalid date format found: {raw_date}")
+                return None
+        else:
+            logger.debug(f"Date not found in the file name: {file_name}")
             return None
-    else:
-        logger.debug(f"Date not found in the file name: {file_name}")
-        return None
 
 
 async def get_pdf_url_from_page():

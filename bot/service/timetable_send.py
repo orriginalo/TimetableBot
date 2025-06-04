@@ -5,8 +5,6 @@ from bot.requests.screenshots import get_screenshot_path
 from utils.log import logger
 from aiogram import Bot
 
-margin = 15
-
 async def send_new_timetable(bot: Bot):
     logger.info("Sending timetable to next week...")
 
