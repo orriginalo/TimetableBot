@@ -12,3 +12,6 @@ __pycache__
 
 test.py
 setup.py
+
+./bot/service/changes_send.py
+./bot/service/changes_new.py

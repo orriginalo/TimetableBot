@@ -32,6 +32,11 @@ services:
       - ./data/database:/var/lib/postgresql/data
     networks:
       - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   pg_admin:
     image: dpage/pgadmin4:latest
@@ -46,7 +51,8 @@ services:
       - internal
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 networks:
   internal:

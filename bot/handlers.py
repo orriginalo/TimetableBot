@@ -9,7 +9,7 @@ from bot.database.queries.user import update_user, get_user_by_id, get_users
 from bot.database.queries.group import get_group_by_name
 
 import bot.keyboards as kb
-from bot.service.changes import instantly_send_changes
+from bot.service.changes_new import instantly_send_changes
 from bot.requests.screenshots import fetch_screenshot_path_and_send
 
 
