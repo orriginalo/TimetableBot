@@ -68,8 +68,8 @@ try_formats = [
     DateFormat("%d.%m.%y", r"\b\d{2}\.\d{2}\.\d{2}\b"),
     DateFormat("%d.%m..%Y", r"\b\d{2}\.\d{2}\..\d{4}\b"),
     DateFormat("%d.%m..%y", r"\b\d{2}\.\d{2}\..\d{2}\b"),
-    DateFormat("%d.%m..%Y", r"\b\d{2}\.\d{2}\.\d{4}g\b"),
-    DateFormat("%d.%m..%y", r"\b\d{2}\.\d{2}\.\d{2}g\b"),
+    DateFormat("%d.%m.%Yg", r"\b\d{2}\.\d{2}\.\d{4}g\b"),
+    DateFormat("%d.%m.%yg", r"\b\d{2}\.\d{2}\.\d{2}g\b"),
     DateFormat(normalize=get_changes_date_by_monthname),
     ]
 
