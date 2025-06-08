@@ -4,8 +4,7 @@ from bot.database.models import User
 from bot.database.setup import session
 from bot.database.schemas import UserSchema
 from utils.log import logger
-
-import variables as var
+from bot.config import settings
 
 
 async def add_user(
@@ -14,7 +13,7 @@ async def add_user(
     username: str = None,
     firstname: str = "",
     lastname: str = "",
-    settings: dict = var.default_user_settings,
+    settings: dict = settings.DEFAULT_USER_SETTINGS,
     group_id: int = None,
     group_name: str = None,
 ):

@@ -31,6 +31,12 @@ ask_changes_keyboard = InlineKeyboardMarkup(
     ],
 )
 
+admin_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="🚫 Забанить", callback_data="ban"), InlineKeyboardButton(text="Разбанить 💚", callback_data="unban")]
+    ]
+)
+
 other_group_when = InlineKeyboardMarkup(
     inline_keyboard=[
         [

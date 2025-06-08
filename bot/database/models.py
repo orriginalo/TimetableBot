@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB, BIGINT
 
 from bot.database.setup import Base
 
-import variables as var
+from bot.config import settings
 
 intpk = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
 created_at = Annotated[
@@ -30,7 +30,7 @@ class User(Base):
     username: Mapped[str | None]
     firstname: Mapped[str | None]
     lastname: Mapped[str | None]
-    settings: Mapped[dict] = mapped_column(JSONB, default=var.default_user_settings)
+    settings: Mapped[dict] = mapped_column(JSONB, default=settings.DEFAULT_USER_SETTINGS)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
     group_id: Mapped[int | None]

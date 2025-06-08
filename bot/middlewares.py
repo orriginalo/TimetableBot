@@ -15,11 +15,7 @@ class CheckState(Filter):
     async def __call__(self, message: Message, bot: Bot, state: FSMContext) -> bool:
         user = await get_user_by_id(message.from_user.id)
         if user:
-            if (
-                (user.group_name is None)
-                and ((await state.get_state()) != "SetGroup:group_name")
-                and (message.text != "/start")
-            ):
+            if (user.group_name is None) and ((await state.get_state()) != 'SetGroup:group_name') and (message.text != '/start'):
                 return False
             return True
         return True
@@ -55,29 +51,22 @@ class MsgLoggerMiddleware(BaseException):
         )
 
         # Добавляем пользователя в data
-        data["user"] = user
-        msg = ""
+        data['user'] = user
+        msg = ''
 
         # Определяем имя пользователя
-        user_name = f"{event.from_user.first_name or ''}{' ' + event.from_user.last_name if event.from_user.last_name else ''}"
+        user_name = f'{event.from_user.first_name or ""}{" " + event.from_user.last_name if event.from_user.last_name else ""}'
 
         try:
             if isinstance(event, Message):
-                msg = (
-                    event.text
-                    if event.content_type == "text"
-                    else f"some <{event.content_type}>"
-                )
+                msg = event.text if event.content_type == 'text' else f'some <{event.content_type}>'
                 logger.info(f'Message  - [{user_name}] - "{msg}"')
 
             elif isinstance(event, CallbackQuery):
-                data["callback_data"] = event.data  # Не перезаписываем весь `data`
-                msg = ""
+                data['callback_data'] = event.data  # Не перезаписываем весь `data`
+                msg = ''
 
-                if (
-                    event.message.reply_markup
-                    and event.message.reply_markup.inline_keyboard
-                ):
+                if event.message.reply_markup and event.message.reply_markup.inline_keyboard:
                     for line in event.message.reply_markup.inline_keyboard:
                         for button in line:
                             if button.callback_data == event.data:
@@ -87,6 +76,6 @@ class MsgLoggerMiddleware(BaseException):
                 logger.info(f'Callback - [{user_name}] - "{msg}" : {event.data}')
 
         except Exception as e:
-            print(f"Ошибка в логировании: {e}")
+            print(f'Ошибка в логировании: {e}')
 
         return await handler(event, data)  # `data` остаётся словарём!

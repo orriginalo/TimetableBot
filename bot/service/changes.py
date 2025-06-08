@@ -444,7 +444,7 @@ async def get_changes_date(url: str, date_formats: list[DateFormat]) -> str | No
     # Пытаемся найти дату в формате dd.mm.yy или dd.mm.yyyy
     for fmt in date_formats:
         if fmt.normalize is not None:
-            return fmt.normalize(file_name)
+            return await fmt.normalize(file_name)
         logger.debug(f"Trying to parse date with format: {fmt.fmt}")
         date_match = re.search(fmt.regex, file_name)
         if date_match:
@@ -467,7 +467,7 @@ async def get_pdf_url_from_page():
     url = "https://ulstu.ru/education/spo/kei/student/schedule/"
 
     logger.debug(f"Getting a page with URL: {url}")
-    response = await asyncio.to_thread(requests.get, url)
+    response = await asyncio.to_thread(requests.get, url, timeout=10)
     if response.status_code != 200:
         logger.error(
             f"It was not possible to get a page. Status code: {response.status_code}"
